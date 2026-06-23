@@ -1,0 +1,37 @@
+[
+  {
+    "sample": 0,
+    "t_no_log": 5.47888970375061,
+    "t_log": 3.6493592262268066,
+    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/sanity_traces/trace_sample_0.jsonl",
+    "success": true
+  },
+  {
+    "sample": 1,
+    "t_no_log": 3.372157335281372,
+    "t_log": 3.8181066513061523,
+    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/sanity_traces/trace_sample_1.jsonl",
+    "success": true
+  },
+  {
+    "sample": 2,
+    "t_no_log": 2.6531870365142822,
+    "t_log": 2.5369985103607178,
+    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/sanity_traces/trace_sample_2.jsonl",
+    "success": true
+  },
+  {
+    "sample": 3,
+    "t_no_log": 2.700761318206787,
+    "t_log": 2.552245616912842,
+    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/sanity_traces/trace_sample_3.jsonl",
+    "success": true
+  },
+  {
+    "sample": 4,
+    "t_no_log": 3.4811577796936035,
+    "t_log": 3.4768896102905273,
+    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/sanity_traces/trace_sample_4.jsonl",
+    "success": true
+  }
+]
