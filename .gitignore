@@ -1,0 +1,14 @@
+models/
+data/
+.cache/
+.antigravity-server/
+
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.arrow
+
+__pycache__/
+.ipynb_checkpoints/
