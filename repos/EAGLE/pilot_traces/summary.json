@@ -1,402 +1,402 @@
 [
   {
+    "dataset": "livecodebench",
+    "idx": 0,
+    "t_no_log": 41.78659272193909,
+    "t_log": 42.50544357299805,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_0.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 1,
+    "t_no_log": 40.676098108291626,
+    "t_log": 41.34489631652832,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_1.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 2,
+    "t_no_log": 42.34965395927429,
+    "t_log": 43.16240739822388,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_2.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 3,
+    "t_no_log": 44.39728498458862,
+    "t_log": 45.09536123275757,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_3.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 4,
+    "t_no_log": 38.5195586681366,
+    "t_log": 38.64838528633118,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_4.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 5,
+    "t_no_log": 36.637056827545166,
+    "t_log": 36.97939395904541,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_5.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 6,
+    "t_no_log": 45.993996143341064,
+    "t_log": 46.53187966346741,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_6.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 7,
+    "t_no_log": 44.90448069572449,
+    "t_log": 45.397199630737305,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_7.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 8,
+    "t_no_log": 37.4589741230011,
+    "t_log": 37.91321134567261,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_8.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 9,
+    "t_no_log": 44.40191864967346,
+    "t_log": 44.97387170791626,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_9.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 10,
+    "t_no_log": 44.46507453918457,
+    "t_log": 44.94926691055298,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_10.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 11,
+    "t_no_log": 51.41707181930542,
+    "t_log": 52.05419969558716,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_11.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 12,
+    "t_no_log": 48.74205446243286,
+    "t_log": 49.3283166885376,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_12.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 13,
+    "t_no_log": 47.21705460548401,
+    "t_log": 47.83507680892944,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_13.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 14,
+    "t_no_log": 44.75394535064697,
+    "t_log": 45.321651458740234,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_14.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 15,
+    "t_no_log": 46.62753367424011,
+    "t_log": 47.219274044036865,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_15.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 16,
+    "t_no_log": 42.76780557632446,
+    "t_log": 43.281779289245605,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_16.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 17,
+    "t_no_log": 44.66451692581177,
+    "t_log": 45.14977717399597,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_17.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 18,
+    "t_no_log": 48.56972885131836,
+    "t_log": 49.10548377037048,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_18.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "livecodebench",
+    "idx": 19,
+    "t_no_log": 54.11784839630127,
+    "t_log": 54.848323583602905,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_livecodebench_19.jsonl",
+    "success": true
+  },
+  {
     "dataset": "math500",
     "idx": 0,
-    "t_no_log": 4.416908264160156,
-    "t_log": 2.9078049659729004,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_0.jsonl",
+    "t_no_log": 43.16572093963623,
+    "t_log": 43.769453287124634,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_0.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 1,
-    "t_no_log": 2.983391761779785,
-    "t_log": 2.912684917449951,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_1.jsonl",
+    "t_no_log": 43.106847286224365,
+    "t_log": 43.83696961402893,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_1.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 2,
-    "t_no_log": 2.557811975479126,
-    "t_log": 2.573245048522949,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_2.jsonl",
+    "t_no_log": 37.258902072906494,
+    "t_log": 37.84310841560364,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_2.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 3,
-    "t_no_log": 3.2150840759277344,
-    "t_log": 3.074618339538574,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_3.jsonl",
+    "t_no_log": 21.36374020576477,
+    "t_log": 21.749271869659424,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_3.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 4,
-    "t_no_log": 2.1416358947753906,
-    "t_log": 2.170031785964966,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_4.jsonl",
+    "t_no_log": 38.85446238517761,
+    "t_log": 39.439170598983765,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_4.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 5,
-    "t_no_log": 2.8914029598236084,
-    "t_log": 2.7896909713745117,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_5.jsonl",
+    "t_no_log": 30.471660137176514,
+    "t_log": 30.941213369369507,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_5.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 6,
-    "t_no_log": 1.8202521800994873,
-    "t_log": 1.8318707942962646,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_6.jsonl",
+    "t_no_log": 48.83613181114197,
+    "t_log": 49.50200080871582,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_6.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 7,
-    "t_no_log": 3.1783552169799805,
-    "t_log": 3.1194703578948975,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_7.jsonl",
+    "t_no_log": 39.48957681655884,
+    "t_log": 40.002238273620605,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_7.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 8,
-    "t_no_log": 2.550072431564331,
-    "t_log": 2.560595989227295,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_8.jsonl",
+    "t_no_log": 51.170809268951416,
+    "t_log": 51.82459759712219,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_8.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 9,
-    "t_no_log": 2.9733471870422363,
-    "t_log": 2.857386827468872,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_9.jsonl",
+    "t_no_log": 41.39557433128357,
+    "t_log": 41.89310884475708,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_9.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 10,
-    "t_no_log": 2.0169994831085205,
-    "t_log": 2.058469295501709,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_10.jsonl",
+    "t_no_log": 49.300076723098755,
+    "t_log": 49.95847988128662,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_10.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 11,
-    "t_no_log": 3.088491916656494,
-    "t_log": 3.0760819911956787,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_11.jsonl",
+    "t_no_log": 43.57333564758301,
+    "t_log": 44.16793727874756,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_11.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 12,
-    "t_no_log": 2.9098803997039795,
-    "t_log": 3.007676362991333,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_12.jsonl",
+    "t_no_log": 38.546820878982544,
+    "t_log": 39.05827212333679,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_12.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 13,
-    "t_no_log": 2.917440176010132,
-    "t_log": 2.935790538787842,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_13.jsonl",
+    "t_no_log": 41.24186563491821,
+    "t_log": 41.69637942314148,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_13.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 14,
-    "t_no_log": 2.7152938842773438,
-    "t_log": 2.6544992923736572,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_14.jsonl",
+    "t_no_log": 42.616806507110596,
+    "t_log": 43.190088748931885,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_14.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 15,
-    "t_no_log": 3.4188778400421143,
-    "t_log": 3.4185283184051514,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_15.jsonl",
+    "t_no_log": 41.256913900375366,
+    "t_log": 41.76658630371094,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_15.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 16,
-    "t_no_log": 2.415236711502075,
-    "t_log": 2.334554433822632,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_16.jsonl",
+    "t_no_log": 38.268677711486816,
+    "t_log": 38.737064361572266,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_16.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 17,
-    "t_no_log": 3.021430253982544,
-    "t_log": 3.126000165939331,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_17.jsonl",
+    "t_no_log": 41.736475467681885,
+    "t_log": 42.250688791275024,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_17.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 18,
-    "t_no_log": 3.411435842514038,
-    "t_log": 3.4253082275390625,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_18.jsonl",
+    "t_no_log": 38.736058473587036,
+    "t_log": 39.24012064933777,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_18.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 19,
-    "t_no_log": 2.6352620124816895,
-    "t_log": 2.6487765312194824,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_19.jsonl",
+    "t_no_log": 41.5059335231781,
+    "t_log": 42.01852226257324,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_19.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 20,
-    "t_no_log": 3.1029305458068848,
-    "t_log": 3.1342153549194336,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_20.jsonl",
+    "t_no_log": 15.629246234893799,
+    "t_log": 15.82961893081665,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_20.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 21,
-    "t_no_log": 2.6455094814300537,
-    "t_log": 2.5397980213165283,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_21.jsonl",
+    "t_no_log": 42.90398192405701,
+    "t_log": 43.454731464385986,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_21.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 22,
-    "t_no_log": 2.6298389434814453,
-    "t_log": 2.64915132522583,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_22.jsonl",
+    "t_no_log": 38.028271436691284,
+    "t_log": 38.47828769683838,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_22.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 23,
-    "t_no_log": 2.685894727706909,
-    "t_log": 2.602785587310791,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_23.jsonl",
+    "t_no_log": 42.67642903327942,
+    "t_log": 43.26439666748047,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_23.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 24,
-    "t_no_log": 3.8195652961730957,
-    "t_log": 3.9090349674224854,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_24.jsonl",
+    "t_no_log": 42.97624325752258,
+    "t_log": 43.51323676109314,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_24.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 25,
-    "t_no_log": 2.131448984146118,
-    "t_log": 2.163141965866089,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_25.jsonl",
+    "t_no_log": 37.59661674499512,
+    "t_log": 38.13682842254639,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_25.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 26,
-    "t_no_log": 2.7935519218444824,
-    "t_log": 2.9281580448150635,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_26.jsonl",
+    "t_no_log": 50.02720499038696,
+    "t_log": 50.69751453399658,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_26.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 27,
-    "t_no_log": 3.3176591396331787,
-    "t_log": 3.3472394943237305,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_27.jsonl",
+    "t_no_log": 41.63257932662964,
+    "t_log": 42.16654682159424,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_27.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 28,
-    "t_no_log": 3.161954402923584,
-    "t_log": 3.061288833618164,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_28.jsonl",
+    "t_no_log": 46.049798011779785,
+    "t_log": 46.70817971229553,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_28.jsonl",
     "success": true
   },
   {
     "dataset": "math500",
     "idx": 29,
-    "t_no_log": 2.368443012237549,
-    "t_log": 2.4472548961639404,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_math500_29.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 0,
-    "t_no_log": 3.114650011062622,
-    "t_log": 3.13862681388855,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_0.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 1,
-    "t_no_log": 3.228928804397583,
-    "t_log": 3.251237392425537,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_1.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 2,
-    "t_no_log": 3.2888059616088867,
-    "t_log": 3.30521559715271,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_2.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 3,
-    "t_no_log": 4.0211546421051025,
-    "t_log": 4.032020568847656,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_3.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 4,
-    "t_no_log": 3.9540655612945557,
-    "t_log": 3.911621570587158,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_4.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 5,
-    "t_no_log": 3.3497138023376465,
-    "t_log": 3.472578525543213,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_5.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 6,
-    "t_no_log": 4.297352075576782,
-    "t_log": 4.373386859893799,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_6.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 7,
-    "t_no_log": 3.7567942142486572,
-    "t_log": 3.731968641281128,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_7.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 8,
-    "t_no_log": 3.913665294647217,
-    "t_log": 3.918562412261963,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_8.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 9,
-    "t_no_log": 2.8042900562286377,
-    "t_log": 2.8580968379974365,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_9.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 10,
-    "t_no_log": 2.7929909229278564,
-    "t_log": 2.7956111431121826,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_10.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 11,
-    "t_no_log": 3.753336191177368,
-    "t_log": 3.664782762527466,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_11.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 12,
-    "t_no_log": 2.7009031772613525,
-    "t_log": 2.8088021278381348,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_12.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 13,
-    "t_no_log": 2.78159236907959,
-    "t_log": 2.842254400253296,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_13.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 14,
-    "t_no_log": 2.740377902984619,
-    "t_log": 2.7746100425720215,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_14.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 15,
-    "t_no_log": 3.2084882259368896,
-    "t_log": 3.19777250289917,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_15.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 16,
-    "t_no_log": 3.108449935913086,
-    "t_log": 3.0536882877349854,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_16.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 17,
-    "t_no_log": 3.4550163745880127,
-    "t_log": 3.529662609100342,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_17.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 18,
-    "t_no_log": 3.1778335571289062,
-    "t_log": 3.179626941680908,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_18.jsonl",
-    "success": true
-  },
-  {
-    "dataset": "livecodebench",
-    "idx": 19,
-    "t_no_log": 3.5757434368133545,
-    "t_log": 3.4648725986480713,
-    "trace_file": "/teamspace/studios/this_studio/repos/EAGLE/pilot_traces/trace_livecodebench_19.jsonl",
+    "t_no_log": 40.86516571044922,
+    "t_log": 41.45848298072815,
+    "trace_file": "/root/phase-entropy-cot/repos/EAGLE/pilot_traces/trace_math500_29.jsonl",
     "success": true
   }
 ]

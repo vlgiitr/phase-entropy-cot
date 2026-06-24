@@ -1,0 +1,242 @@
+[
+  {
+    "dataset": "math500",
+    "idx": 0,
+    "t_no_log": 43.16572093963623,
+    "t_log": 43.769453287124634,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_0.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 1,
+    "t_no_log": 43.106847286224365,
+    "t_log": 43.83696961402893,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_1.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 2,
+    "t_no_log": 37.258902072906494,
+    "t_log": 37.84310841560364,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_2.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 3,
+    "t_no_log": 21.36374020576477,
+    "t_log": 21.749271869659424,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_3.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 4,
+    "t_no_log": 38.85446238517761,
+    "t_log": 39.439170598983765,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_4.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 5,
+    "t_no_log": 30.471660137176514,
+    "t_log": 30.941213369369507,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_5.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 6,
+    "t_no_log": 48.83613181114197,
+    "t_log": 49.50200080871582,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_6.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 7,
+    "t_no_log": 39.48957681655884,
+    "t_log": 40.002238273620605,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_7.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 8,
+    "t_no_log": 51.170809268951416,
+    "t_log": 51.82459759712219,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_8.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 9,
+    "t_no_log": 41.39557433128357,
+    "t_log": 41.89310884475708,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_9.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 10,
+    "t_no_log": 49.300076723098755,
+    "t_log": 49.95847988128662,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_10.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 11,
+    "t_no_log": 43.57333564758301,
+    "t_log": 44.16793727874756,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_11.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 12,
+    "t_no_log": 38.546820878982544,
+    "t_log": 39.05827212333679,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_12.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 13,
+    "t_no_log": 41.24186563491821,
+    "t_log": 41.69637942314148,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_13.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 14,
+    "t_no_log": 42.616806507110596,
+    "t_log": 43.190088748931885,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_14.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 15,
+    "t_no_log": 41.256913900375366,
+    "t_log": 41.76658630371094,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_15.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 16,
+    "t_no_log": 38.268677711486816,
+    "t_log": 38.737064361572266,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_16.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 17,
+    "t_no_log": 41.736475467681885,
+    "t_log": 42.250688791275024,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_17.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 18,
+    "t_no_log": 38.736058473587036,
+    "t_log": 39.24012064933777,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_18.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 19,
+    "t_no_log": 41.5059335231781,
+    "t_log": 42.01852226257324,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_19.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 20,
+    "t_no_log": 15.629246234893799,
+    "t_log": 15.82961893081665,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_20.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 21,
+    "t_no_log": 42.90398192405701,
+    "t_log": 43.454731464385986,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_21.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 22,
+    "t_no_log": 38.028271436691284,
+    "t_log": 38.47828769683838,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_22.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 23,
+    "t_no_log": 42.67642903327942,
+    "t_log": 43.26439666748047,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_23.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 24,
+    "t_no_log": 42.97624325752258,
+    "t_log": 43.51323676109314,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_24.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 25,
+    "t_no_log": 37.59661674499512,
+    "t_log": 38.13682842254639,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_25.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 26,
+    "t_no_log": 50.02720499038696,
+    "t_log": 50.69751453399658,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_26.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 27,
+    "t_no_log": 41.63257932662964,
+    "t_log": 42.16654682159424,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_27.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 28,
+    "t_no_log": 46.049798011779785,
+    "t_log": 46.70817971229553,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_28.jsonl",
+    "success": true
+  },
+  {
+    "dataset": "math500",
+    "idx": 29,
+    "t_no_log": 40.86516571044922,
+    "t_log": 41.45848298072815,
+    "trace_file": "/root/phase-entropy-cot/repos/pilot_traces/trace_math500_29.jsonl",
+    "success": true
+  }
+]
