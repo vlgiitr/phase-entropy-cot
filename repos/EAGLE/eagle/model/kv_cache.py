@@ -95,11 +95,15 @@ def initialize_past_key_values(model,max_length=2200):
         except:
             device=model.layers[i].self_attn.q_proj.weight.device
         devices.append(device)
-    past_key_values_data_list=[]
-    startnum=0
-    startdevice=devices[0]
-    for id,i in enumerate(devices):
-        if startdevice!=i:
+    past_key_values_data_list = []
+    segment_id_by_layer = []
+    layers_per_segment = []
+
+    startnum = 0
+    startdevice = devices[0]
+    current_segment_id = 0
+    for i in devices:
+        if startdevice != i:
             past_key_values_data = torch.zeros(
                 startnum * 2,
                 batch_size,
@@ -110,9 +114,13 @@ def initialize_past_key_values(model,max_length=2200):
                 dtype=model.dtype,
             )
             past_key_values_data_list.append(past_key_values_data)
+            layers_per_segment.append(startnum)
+            current_segment_id += 1
             startdevice = i
-            startnum=0
+            startnum = 0
+        segment_id_by_layer.append(current_segment_id)
         startnum += 1
+
     past_key_values_data = torch.zeros(
         startnum * 2,
         batch_size,
@@ -123,6 +131,7 @@ def initialize_past_key_values(model,max_length=2200):
         dtype=model.dtype,
     )
     past_key_values_data_list.append(past_key_values_data)
+    layers_per_segment.append(startnum)
     # Initialize tensor to store the current length of the cached data for all layers.
     # [IMPORTANT] It needs to be kept on CPU for quick access and updates.
     current_length_data = torch.zeros(
@@ -131,27 +140,18 @@ def initialize_past_key_values(model,max_length=2200):
     # Creating a KVCache for each pair of key and value in all layers
     past_key_values = [] * config.num_hidden_layers
 
-    bias=0
-    start_data_m=devices[0].index
+    layer_offset_in_segment = [0 for _ in range(len(past_key_values_data_list))]
     for i in range(config.num_hidden_layers):
-        data_m=devices[i].index
-        if data_m!=start_data_m:
-            bias=0
-            start_data_m=data_m
-        try:
-            past_key_values.append(
-                [
-                    KVCache(past_key_values_data_list[data_m-devices[0].index][2*bias + j], current_length_data[i * 2 + j])
-                    for j in range(2)
-                ]
-            )
-        except:
-            past_key_values.append(
-                [
-                    KVCache(past_key_values_data_list[0][2 * bias + j],
-                            current_length_data[i * 2 + j])
-                    for j in range(2)
-                ]
-            )
-        bias+=1
+        seg_id = segment_id_by_layer[i]
+        bias = layer_offset_in_segment[seg_id]
+        past_key_values.append(
+            [
+                KVCache(
+                    past_key_values_data_list[seg_id][2 * bias + j],
+                    current_length_data[i * 2 + j],
+                )
+                for j in range(2)
+            ]
+        )
+        layer_offset_in_segment[seg_id] += 1
     return past_key_values, past_key_values_data_list, current_length_data

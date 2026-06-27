@@ -667,7 +667,7 @@ class Model(nn.Module):
         self.stable_kv = None
 
     @torch.no_grad()
-    def topK_genrate(self, hidden_states, input_ids, head, logits_processor):
+    def topK_genrate(self, hidden_states, input_ids, head, logits_processor, return_stats=False):
 
         input_ids = input_ids.to(hidden_states.device)
         total_tokens = self.total_tokens
@@ -700,6 +700,22 @@ class Model(nn.Module):
         last_headout = self.lm_head(self.norm(last_hidden))
 
         last_p = self.logsoftmax(last_headout)
+        draft_probs_root = torch.exp(last_p[0].float())
+        draft_entropy_bits = float((-(draft_probs_root * (last_p[0].float() / math.log(2.0)))).sum().item())
+        draft_topk_size = min(32, draft_probs_root.shape[-1])
+        draft_top_probs, draft_top_indices = torch.topk(draft_probs_root, draft_topk_size, dim=-1)
+        if self.config.vocab_size == self.config.draft_vocab_size:
+            draft_top_token_ids = draft_top_indices
+        else:
+            draft_top_token_ids = self.d2t[draft_top_indices]
+        draft_stats = {
+            "draft_entropy": draft_entropy_bits,
+            "draft_top1_prob": float(draft_top_probs[0].item()) if draft_top_probs.numel() else None,
+            "draft_topk_probs": [
+                {"id": int(tok_id), "prob": float(prob)}
+                for tok_id, prob in zip(draft_top_token_ids.tolist(), draft_top_probs.tolist())
+            ],
+        }
         top = torch.topk(last_p, top_k, dim=-1)
         topk_index, topk_p = top.indices, top.values
         scores = topk_p[0]
@@ -824,6 +840,8 @@ class Model(nn.Module):
         del mask_index, mask_index_list, noleaf_index, noleaf_num, leaf_num, max_depth, rid
         tree_position_ids = tree_position_ids.to(hidden_states.device)
 
+        if return_stats:
+            return draft_tokens, retrieve_indices, tree_mask, tree_position_ids, draft_stats
         return draft_tokens, retrieve_indices, tree_mask, tree_position_ids
 
 

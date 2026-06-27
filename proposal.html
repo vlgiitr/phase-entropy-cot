@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phase-Structured Entropy in Chain-of-Thought — Research Proposal</title>
+<meta name="description" content="A workshop research proposal: is there a latent reasoning-phase state in chain-of-thought entropy that predicts speculative-decoding acceptance beyond instantaneous confidence?">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,900&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#faf6ee; --paper-2:#f4ecdd; --paper-3:#efe6d4;
+  --ink:#1b2a4a; --ink-soft:#3d4a66; --ink-faint:#7a8299;
+  --rust:#b1542f; --rust-soft:#c97a52; --rust-wash:#f3e0d4;
+  --sage:#5f7a6b; --sage-wash:#e2e8e1; --gold:#bd8a2c;
+  --accept:#3f7a5c; --reject:#b1542f;
+  --line:rgba(27,42,74,.16); --line-2:rgba(27,42,74,.08);
+  --shadow:0 1px 2px rgba(27,42,74,.06),0 8px 30px rgba(27,42,74,.08);
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --serif:"Newsreader",Georgia,"Iowan Old Style","Palatino Linotype",Palatino,serif;
+  --display:"Fraunces","Newsreader",Georgia,serif;
+  --maxw:1240px; --readw:72ch;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--serif); font-size:1.16rem;
+  line-height:1.64; font-optical-sizing:auto; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility}
+body::before{content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E"); mix-blend-mode:multiply}
+#progress{position:fixed; top:0; left:0; height:3px; width:0%; z-index:60; background:linear-gradient(90deg,var(--rust),var(--gold)); transition:width .1s linear}
+.shell{position:relative; z-index:1; max-width:var(--maxw); margin:0 auto; padding:0 clamp(18px,4vw,48px);
+  display:grid; grid-template-columns:248px minmax(0,1fr); gap:clamp(24px,4vw,64px)}
+.toc{position:sticky; top:0; align-self:start; height:100vh; padding:30px 0; overflow:auto}
+.toc .brand{font-family:var(--display); font-weight:600; font-size:1rem; line-height:1.2}
+.toc .brand b{color:var(--rust)}
+.toc .tag{font-family:var(--mono); font-size:.66rem; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint); margin:2px 0 22px}
+.toc ol{list-style:none; margin:0; padding:0; counter-reset:s}
+.toc li{counter-increment:s}
+.toc a{display:flex; gap:10px; align-items:baseline; text-decoration:none; color:var(--ink-soft); font-size:.92rem;
+  padding:6px 0; border-top:1px solid var(--line-2); transition:color .2s}
+.toc a::before{content:counter(s,decimal-leading-zero); font-family:var(--mono); font-size:.68rem; color:var(--ink-faint); flex:0 0 auto}
+.toc a:hover{color:var(--ink)} .toc a.active{color:var(--rust)} .toc a.active::before{color:var(--rust)}
+.toc .done{margin-top:22px; padding-top:14px; border-top:1px solid var(--line)}
+.toc .done a{border:0; padding:4px 0; font-size:.82rem; color:var(--ink-faint)} .toc .done a:hover{color:var(--rust)}
+.menubtn{display:none}
+@media (max-width:880px){
+  .shell{grid-template-columns:1fr}
+  .toc{position:fixed; inset:0 auto 0 0; width:82%; max-width:340px; height:100%; z-index:80; background:var(--paper-2);
+    box-shadow:var(--shadow); padding:28px 24px; transform:translateX(-105%); transition:transform .3s; border-right:1px solid var(--line)}
+  .toc.open{transform:none}
+  .menubtn{display:flex; position:fixed; top:12px; right:12px; z-index:81; align-items:center; gap:8px; background:var(--ink);
+    color:var(--paper); border:0; border-radius:30px; padding:9px 15px; font-family:var(--mono); font-size:.7rem;
+    letter-spacing:.12em; text-transform:uppercase; cursor:pointer; box-shadow:var(--shadow)}
+  .scrim{display:none; position:fixed; inset:0; background:rgba(27,42,74,.35); z-index:79} .scrim.show{display:block}
+}
+main{padding:0 0 10vh; min-width:0}
+.section{padding:5vh 0 3vh; border-bottom:1px solid var(--line-2); scroll-margin-top:16px}
+.kicker{font-family:var(--mono); font-size:.72rem; letter-spacing:.2em; text-transform:uppercase; color:var(--rust);
+  display:flex; align-items:center; gap:12px; margin-bottom:14px}
+.kicker::after{content:""; height:1px; flex:1; background:var(--line)}
+h1,h2,h3,h4{font-family:var(--display); font-weight:600; line-height:1.08; color:var(--ink); margin:0 0 .45em}
+h1{font-size:clamp(2.3rem,5.2vw,3.7rem); font-weight:900; letter-spacing:-.015em}
+h2{font-size:clamp(1.7rem,3.6vw,2.5rem); letter-spacing:-.01em; cursor:pointer; display:flex; align-items:flex-start; gap:12px}
+h2 .chev{font-family:var(--serif); color:var(--rust); font-size:.8em; transition:transform .25s; flex:0 0 auto; margin-top:.1em}
+.section.collapsed h2 .chev{transform:rotate(-90deg)}
+h3{font-size:clamp(1.2rem,2.3vw,1.5rem)} h4{font-size:1.05rem; font-weight:600}
+p,li{max-width:var(--readw)} .secbody{overflow:hidden}
+.section.collapsed .secbody{display:none}
+.lede{font-size:1.28rem; line-height:1.5; color:var(--ink-soft)}
+em{font-style:italic} strong{font-weight:600}
+a.link{color:var(--rust); text-underline-offset:3px}
+.drop::first-letter{font-family:var(--display); font-weight:900; float:left; font-size:3.4em; line-height:.74; padding:.06em .12em 0 0; color:var(--rust)}
+.pull{font-family:var(--display); font-size:clamp(1.3rem,2.6vw,1.8rem); line-height:1.22; color:var(--rust); font-weight:500;
+  border-left:3px solid var(--rust); padding:.1em 0 .1em 24px; margin:1.3em 0; max-width:none}
+.note{font-size:.95rem; color:var(--ink-faint); font-style:italic}
+.math{font-family:var(--mono); font-size:.93em; background:var(--paper-3); padding:1px 6px; border-radius:5px; border:1px solid var(--line-2); white-space:nowrap}
+hr.rule{border:0; border-top:1px solid var(--line); margin:2em 0}
+/* hero */
+.hero{padding:12vh 0 6vh; border-bottom:1px solid var(--line)}
+.hero .eye{font-family:var(--mono); font-size:.72rem; letter-spacing:.22em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:22px}
+.hero h1 .accent{color:var(--rust); font-style:italic}
+.hero .work{font-family:var(--display); font-style:italic; font-size:1.3rem; color:var(--ink-soft); max-width:62ch; margin:.4em 0 0}
+.tldr{margin-top:30px; background:var(--paper-2); border:1px solid var(--line); border-left:4px solid var(--rust); border-radius:12px;
+  padding:22px 24px; max-width:none; box-shadow:var(--shadow)}
+.tldr .lab{font-family:var(--mono); font-size:.7rem; letter-spacing:.18em; text-transform:uppercase; color:var(--rust); margin-bottom:8px}
+.tldr p{margin:0; max-width:none; font-size:1.12rem}
+.hero .meta{display:flex; flex-wrap:wrap; gap:10px 22px; margin-top:26px; font-family:var(--mono); font-size:.7rem;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint)}
+.hero .meta b{color:var(--rust); font-weight:500}
+.toolbar{display:flex; gap:10px; flex-wrap:wrap; margin:26px 0 0}
+.btn{background:var(--ink); color:var(--paper); border:1px solid var(--ink); border-radius:30px; padding:9px 17px;
+  font-family:var(--mono); font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; transition:.15s; text-decoration:none; display:inline-flex; align-items:center; gap:8px}
+.btn:hover{background:var(--rust); border-color:var(--rust); transform:translateY(-1px)}
+.btn.ghost{background:transparent; color:var(--ink-soft)} .btn.ghost:hover{background:var(--paper-3); color:var(--ink); transform:none}
+/* figures */
+figure{margin:2em 0; max-width:none}
+.fig{background:linear-gradient(180deg,var(--paper-2),var(--paper)); border:1px solid var(--line); border-radius:14px; padding:clamp(18px,3vw,28px); box-shadow:var(--shadow)}
+.figtitle{font-family:var(--mono); font-size:.72rem; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint); display:flex; align-items:center; gap:10px; margin-bottom:16px}
+.figtitle .dot{width:7px; height:7px; border-radius:50%; background:var(--rust)}
+figcaption{font-size:.93rem; color:var(--ink-faint); margin-top:13px; font-style:italic; max-width:70ch}
+/* by the numbers */
+.bnum{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:12px; overflow:hidden; margin:1.4em 0}
+.bnum div{background:var(--paper); padding:15px 16px}
+.bnum .v{font-family:var(--display); font-weight:600; font-size:1.5rem; color:var(--rust); line-height:1}
+.bnum .k{font-size:.84rem; color:var(--ink-soft); margin-top:6px; line-height:1.3}
+/* approach pipeline */
+.pipe{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin:6px 0 4px}
+@media (max-width:760px){.pipe{grid-template-columns:1fr 1fr}}
+.stage{background:var(--paper); border:1px solid var(--line); border-radius:11px; padding:14px 13px; cursor:pointer; transition:.18s; text-align:left}
+.stage:hover{transform:translateY(-2px); box-shadow:var(--shadow); border-color:var(--rust-soft)}
+.stage.on{border-color:var(--rust); background:var(--rust-wash)}
+.stage .sn{font-family:var(--mono); font-size:.64rem; letter-spacing:.1em; color:var(--rust)}
+.stage .st{font-family:var(--display); font-size:1.04rem; line-height:1.12; margin-top:5px}
+.stage .sd{font-size:.82rem; color:var(--ink-soft); margin-top:6px; line-height:1.3}
+.stageflow{display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:.68rem; color:var(--ink-faint); margin:10px 0}
+.stagedetail{background:var(--paper-2); border:1px solid var(--line); border-radius:11px; padding:16px 18px; margin-top:10px; min-height:3em}
+.stagedetail .dt{font-family:var(--display); font-size:1.1rem; color:var(--ink); margin-bottom:4px}
+.stagedetail .dd{font-size:.98rem; color:var(--ink-soft); margin:0; max-width:none}
+.tagrow{display:flex; gap:7px; flex-wrap:wrap; margin-top:10px}
+.tg{font-family:var(--mono); font-size:.64rem; letter-spacing:.05em; text-transform:uppercase; padding:4px 9px; border-radius:20px; border:1px solid var(--line); color:var(--ink-soft); background:var(--paper)}
+.tg.safe{border-color:var(--sage); color:var(--sage)} .tg.core{border-color:var(--rust); color:var(--rust)}
+/* hypothesis cards */
+.hcards{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px; margin:1.4em 0}
+.hcard{background:var(--paper); border:1px solid var(--line); border-radius:13px; padding:18px 19px; cursor:pointer; transition:.18s; position:relative}
+.hcard:hover{transform:translateY(-2px); box-shadow:var(--shadow)}
+.hcard .hh{font-family:var(--mono); font-size:.68rem; letter-spacing:.1em; color:var(--rust); text-transform:uppercase}
+.hcard .ht{font-family:var(--display); font-size:1.18rem; margin:6px 0 8px; line-height:1.12}
+.hcard .hclaim{font-size:.98rem; color:var(--ink-soft); margin:0}
+.hcard .hmore{max-height:0; overflow:hidden; transition:max-height .3s; font-size:.94rem; color:var(--ink-soft)}
+.hcard.open .hmore{max-height:280px; margin-top:10px}
+.hcard .hfals{display:block; margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); color:var(--reject); font-size:.92rem}
+.hcard .hfals b{font-family:var(--mono); font-size:.66rem; letter-spacing:.08em; text-transform:uppercase}
+.hcard .plus{position:absolute; top:16px; right:17px; font-family:var(--mono); color:var(--ink-faint)}
+.badge{display:inline-block; font-family:var(--mono); font-size:.6rem; letter-spacing:.06em; text-transform:uppercase; padding:3px 8px; border-radius:20px; margin-left:6px; vertical-align:middle}
+.badge.safe{background:var(--sage-wash); color:var(--sage)} .badge.core{background:var(--rust-wash); color:var(--rust)}
+/* tabs + tables */
+.tabs{display:flex; flex-wrap:wrap; gap:6px; margin:1.2em 0 0}
+.tab{font-family:var(--mono); font-size:.68rem; letter-spacing:.06em; text-transform:uppercase; padding:8px 14px; border-radius:30px 30px 0 0;
+  border:1px solid var(--line); border-bottom:0; background:var(--paper-2); color:var(--ink-soft); cursor:pointer}
+.tab.on{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+.tabpanel{border:1px solid var(--line); border-radius:0 12px 12px 12px; overflow:hidden; background:var(--paper)}
+.tabpanel[hidden]{display:none}
+table{border-collapse:collapse; width:100%; font-size:.96rem}
+th,td{text-align:left; padding:11px 14px; border-bottom:1px solid var(--line-2); vertical-align:top}
+th{font-family:var(--mono); font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); background:var(--paper-2)}
+tr:last-child td{border-bottom:0}
+td b{color:var(--ink)} .tier{font-family:var(--mono); font-size:.62rem; letter-spacing:.05em; text-transform:uppercase; padding:3px 8px; border-radius:20px; white-space:nowrap}
+.tier.core{background:var(--rust-wash); color:var(--rust)} .tier.ext{background:var(--paper-3); color:var(--ink-soft)}
+.dual{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:1.2em 0}
+@media (max-width:680px){.dual{grid-template-columns:1fr}}
+.panel{background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:16px 18px}
+.panel.core{border-top:4px solid var(--rust)} .panel.ext{border-top:4px solid var(--ink-faint)}
+.panel h4{margin:0 0 4px} .panel .pn{font-family:var(--mono); font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint)}
+.panel ul{margin:.5em 0 0; padding-left:1.1em} .panel li{margin:.2em 0; font-size:.95rem}
+/* risks accordion */
+.risk{border:1px solid var(--line); border-radius:11px; margin:9px 0; overflow:hidden; background:var(--paper)}
+.risk summary{list-style:none; cursor:pointer; padding:14px 16px; display:flex; gap:12px; align-items:flex-start; font-weight:500}
+.risk summary::-webkit-details-marker{display:none}
+.risk .rid{font-family:var(--mono); font-size:.72rem; color:var(--rust); flex:0 0 auto; padding-top:2px}
+.risk .rtitle{flex:1} .risk .rchev{color:var(--ink-faint); transition:transform .2s}
+.risk[open] .rchev{transform:rotate(180deg)}
+.risk .rbody{padding:0 16px 16px 44px; color:var(--ink-soft); font-size:.97rem}
+.risk .rbody .mit{display:block; margin-top:6px; color:var(--ink)}
+.risk .rbody .mit b{font-family:var(--mono); font-size:.64rem; letter-spacing:.08em; text-transform:uppercase; color:var(--sage)}
+/* timeline */
+.timeline{position:relative; margin:1.6em 0}
+.tlrow{display:grid; grid-template-columns:96px 1fr; gap:16px; align-items:start; padding:4px 0}
+.tlrow .wk{font-family:var(--mono); font-size:.74rem; color:var(--rust); padding-top:13px}
+.tlbar{position:relative; background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:12px 15px; transition:.18s; border-left:4px solid var(--sage)}
+.tlbar:hover{box-shadow:var(--shadow)}
+.tlbar.gate{border-left-color:var(--rust); background:var(--rust-wash)}
+.tlbar.write{border-left-color:var(--gold)}
+.tlbar .tt{font-family:var(--display); font-size:1.08rem} .tlbar .td{font-size:.92rem; color:var(--ink-soft); margin-top:3px}
+.tlbar .gmark{font-family:var(--mono); font-size:.62rem; letter-spacing:.08em; text-transform:uppercase; color:var(--rust); margin-top:7px; display:inline-block}
+.venues{display:flex; flex-wrap:wrap; gap:10px; margin-top:1.4em}
+.vchip{border:1px solid var(--line); border-radius:11px; padding:12px 15px; background:var(--paper); flex:1; min-width:180px}
+.vchip .vn{font-family:var(--display); font-size:1.05rem} .vchip .vm{font-family:var(--mono); font-size:.68rem; color:var(--ink-faint); margin-top:3px}
+.vchip.primary{border-color:var(--rust); border-top:4px solid var(--rust)}
+/* references */
+.refs{column-count:1; font-size:.94rem; line-height:1.5}
+.refitem{padding:9px 0; border-bottom:1px solid var(--line-2); display:flex; gap:12px; align-items:baseline}
+.refitem .rk{font-family:var(--mono); font-size:.7rem; color:var(--ink-faint); flex:0 0 auto}
+.refitem a{color:var(--rust); font-family:var(--mono); font-size:.8rem; text-decoration:none} .refitem a:hover{text-decoration:underline}
+.refitem .rt{flex:1} .refitem .rt b{color:var(--ink)}
+/* tooltips */
+.t{border-bottom:1.5px dotted var(--rust-soft); cursor:help}
+.t:focus{outline:2px solid var(--rust); outline-offset:2px; border-radius:2px}
+#tip{position:fixed; z-index:90; max-width:300px; background:var(--ink); color:var(--paper); padding:13px 15px; border-radius:11px;
+  box-shadow:0 10px 40px rgba(27,42,74,.3); font-size:.92rem; line-height:1.45; opacity:0; transform:translateY(4px); pointer-events:none; transition:.15s; font-family:var(--serif)}
+#tip.show{opacity:1; transform:none; pointer-events:auto}
+#tip b{font-family:var(--display); color:#ffd9a0; display:block; margin-bottom:3px}
+.reveal{opacity:0; transform:translateY(16px); transition:opacity .6s, transform .6s}
+.reveal.show{opacity:1; transform:none}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1; transform:none; transition:none}}
+svg{max-width:100%; height:auto}
+.jnav{position:fixed; right:18px; bottom:18px; z-index:55; display:flex; gap:8px}
+.jbtn{width:48px; height:48px; border-radius:50%; border:1px solid var(--line); background:var(--paper); color:var(--ink); cursor:pointer; box-shadow:var(--shadow); font-size:1.15rem; display:flex; align-items:center; justify-content:center; transition:.18s}
+.jbtn:hover{background:var(--ink); color:var(--paper); transform:translateY(-2px)} .jbtn:disabled{opacity:.35; cursor:default}
+.footer{padding:6vh 0 8vh; color:var(--ink-faint); font-size:.94rem}
+.footer a{color:var(--rust)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+</style>
+  <link rel="stylesheet" href="/lib/feedback.css">
+</head>
+<body>
+<div id="progress" aria-hidden="true"></div>
+<button class="menubtn" id="menubtn" aria-label="Open contents">☰ Contents</button>
+<div class="scrim" id="scrim"></div>
+
+<div class="shell">
+  <nav class="toc" id="toc" aria-label="Contents">
+    <div class="brand">State, or just a<br><b>smoothed level?</b></div>
+    <div class="tag">Workshop proposal</div>
+    <ol>
+      <li><a href="#abstract" data-sec>Abstract</a></li>
+      <li><a href="#motivation" data-sec>Motivation</a></li>
+      <li><a href="#impact" data-sec>Impact</a></li>
+      <li><a href="#background" data-sec>Background</a></li>
+      <li><a href="#limits" data-sec>Limitations of prior work</a></li>
+      <li><a href="#approach" data-sec>Proposed approach</a></li>
+      <li><a href="#hypotheses" data-sec>Hypotheses</a></li>
+      <li><a href="#plan" data-sec>Experimental plan</a></li>
+      <li><a href="#expected" data-sec>Expected results</a></li>
+      <li><a href="#risks" data-sec>Risks &amp; mitigations</a></li>
+      <li><a href="#timeline" data-sec>Timeline</a></li>
+      <li><a href="#refs" data-sec>References</a></li>
+    </ol>
+    <div class="done">
+      <a href="lit_review.html">← The literature tour</a>
+      <a href="#" id="toggleall">⇕ Expand / collapse all</a>
+      <a href="#top">↑ Back to top</a>
+    </div>
+  </nav>
+
+  <main id="top">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="eye">Research proposal · speculative decoding for reasoning models · 4-page workshop target</div>
+      <h1>Phase-structured entropy in chain-of-thought: a <span class="accent">state</span>, or just a smoothed level?</h1>
+      <p class="work">Is there a latent reasoning-phase state in chain-of-thought entropy that predicts speculative-decoding acceptance beyond instantaneous confidence?</p>
+      <div class="tldr">
+        <div class="lab">TL;DR</div>
+        <p>Per-token entropy along a long chain-of-thought is bimodal and looks organized into <em>phases</em>: low-entropy “execution” runs broken by short high-entropy “decision” bursts. We ask the one question that decides whether this matters for inference — does a <strong>latent phase state</strong>, inferred from the whole trajectory, carry information about accepted-run length <em>beyond</em> the instantaneous drafter confidence and its causal smoothing that current adaptive methods already use? On the way, we settle a standing contradiction in the literature. The measurement is the contribution; the controller is a bounded demonstration.</p>
+      </div>
+      <div class="meta">
+        <span><b>4</b> contributions</span>
+        <span><b>4</b> falsifiable hypotheses</span>
+        <span><b>1</b> sign-robust headline</span>
+        <span><b>14</b> week plan</span>
+        <span>verdict <b>useful either way</b></span>
+      </div>
+      <div class="toolbar">
+        <a class="btn" href="#approach">See the approach ↓</a>
+        <a class="btn ghost" href="lit_review.html">New to the field? Take the tour ↗</a>
+      </div>
+    </header>
+
+    <!-- 1 ABSTRACT -->
+    <section class="section" id="abstract">
+      <div class="kicker">01 — Abstract</div>
+      <h2><span class="chev">▾</span>Abstract</h2>
+      <div class="secbody">
+        <p class="drop">Speculative decoding (SD) accelerates LLM inference <span class="t" tabindex="0" data-g="lossless">losslessly</span>, and a large 2024–2026 literature now sets draft length and tree width from the drafter's instantaneous entropy or confidence. We ask whether long <span class="t" tabindex="0" data-g="cot">chain-of-thought</span> reasoning traces contain something more: a <em>latent phase state</em> that predicts SD acceptance beyond what the instantaneous signal already provides. We contribute, in order of how defensible each is:</p>
+        <div class="bnum">
+          <div><div class="v">C1</div><div class="k">Test whether per-token CoT entropy is bimodal and segments into contiguous phases — using the trace as the unit and autocorrelation-preserving nulls.</div></div>
+          <div><div class="v">C2 · safe</div><div class="k">Reconcile the +0.56 / −0.18 entropy↔acceptance contradiction by decomposing it along two axes prior work conflated. Holds regardless of “phases.”</div></div>
+          <div><div class="v">C3 · core</div><div class="k">The state-vs-level test: does a latent phase state add incremental predictive value after conditioning on instantaneous confidence and a bandwidth-matched smoothing?</div></div>
+          <div><div class="v">C4 · demo</div><div class="k">If signal remains, how much a training-free causal detector recovers — at matched FLOPs and wall-clock, stacked on EAGLE-3.</div></div>
+        </div>
+        <p>We pre-register the falsifiers, including that the honest outcome of C3 may be “level, not state.” We release the corpus and analysis.</p>
+      </div>
+    </section>
+
+    <!-- 2 MOTIVATION -->
+    <section class="section" id="motivation">
+      <div class="kicker">02 — Motivation</div>
+      <h2><span class="chev">▾</span>Why this question, and why now</h2>
+      <div class="secbody">
+        <p class="lede">Reasoning models emit very long CoT before a short answer, so decode latency dominates and SD is the natural remedy. The right draft length and tree shape should depend on <em>where in its reasoning the model is</em>.</p>
+        <p>During a determined computation — apply a formula, copy an intermediate result — the next tokens are predictable and a drafter can race ahead. At a decision — which lemma, whether to branch, when to stop — the distribution spreads and hedging across candidates beats committing to a long chain.</p>
+        <p>The reasoning-science literature documents the structure: a minority of high-entropy “forking” tokens carry decisions while the majority are low-entropy followers (Beyond-80/20); thinking phases have higher entropy than answer phases (PEAR); CoT looks like a transition between exploratory and structured regimes (EDRM). None of it links the structure to inference. Meanwhile the SD literature already uses the <em>instantaneous</em> entropy to set draft length (AdaEDL, SVIP) and joint depth+width trees (HeteroSpec, TALON, SAGE, GOOSE). So the open question is sharper than “does entropy predict acceptance.”</p>
+        <p class="pull">Is the phase phenomenon a <em>state</em>, or just a <em>level</em> seen through a low-pass filter?</p>
+        <p>If a token's acceptance prospects are fully captured by its instantaneous predictability and a short causal smoothing of it, then “phases” are just a level, memoryless control is already near-optimal, and the field should stop adding state machines. If instead there is a latent state — inferable from the whole trajectory's dynamics but not the instantaneous level alone — it carries information a causal detector is leaving on the table. The answer is not obvious either way, and we design to resolve it rather than to confirm a hoped-for direction.</p>
+        <p class="note">Why the question isn't circular: a causal threshold of a smoothed signal cannot, by the data-processing inequality, carry information the smoothed signal lacks — so we do not define the scientific phase that way. We define it as a latent state inferred by a hidden-state model with access to the full past-and-future trajectory; such a state is not a function of the causal conditioning set, so incremental information is possible.</p>
+      </div>
+    </section>
+
+    <!-- 3 IMPACT -->
+    <section class="section" id="impact">
+      <div class="kicker">03 — Research &amp; practical impact</div>
+      <h2><span class="chev">▾</span>What this buys the field, and a deployment</h2>
+      <div class="secbody">
+        <div class="dual">
+          <div class="panel core">
+            <div class="pn">Research impact</div>
+            <ul>
+              <li>A correctly-powered, autocorrelation-aware test of whether CoT entropy is bimodal and phase-structured — statistics, not histograms.</li>
+              <li>The draft-vs-target × within-vs-across reconciliation of a live contradiction, useful to anyone designing entropy-based controllers and true regardless of our phase result.</li>
+              <li>A clean <em>state-vs-level</em> verdict that tells the community whether hidden-state machinery is worth building.</li>
+              <li>A reusable corpus annotated with draft/target per-token entropy, latent phase labels, position, tree depth, and accept/reject outcomes.</li>
+            </ul>
+          </div>
+          <div class="panel ext">
+            <div class="pn">Practical / business impact</div>
+            <ul>
+              <li>Reasoning-model serving is costly because outputs are long; any lossless decode speedup is a direct cost/latency win with no quality to defend.</li>
+              <li>If a state exists and a cheap causal detector recovers a useful fraction, the result is a training-free controller that layers on the production-standard drafter (EAGLE-3) with a few interpretable thresholds.</li>
+              <li>If it does not, the field is saved the effort of building one — also valuable.</li>
+              <li>We report the controller's gain at matched FLOPs and wall-clock and stacked on EAGLE-3, so the practical claim is honest about deployment.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 BACKGROUND -->
+    <section class="section" id="background">
+      <div class="kicker">04 — Background &amp; current approaches</div>
+      <h2><span class="chev">▾</span>The ground we build on</h2>
+      <div class="secbody">
+        <p>New to speculative decoding? The companion page explains all of this from scratch with animations. In brief:</p>
+        <h3>Lossless SD</h3>
+        <p>A drafter proposes tokens; the target verifies in one pass and accepts a prefix via modified rejection sampling (accept with probability <span class="math">min(1, p/q)</span>; on reject resample from normalized <span class="math">(p−q)&#8330;</span>), preserving the target's exact distribution (Leviathan et al. 2023; Chen et al. 2023). Verification generalizes to token trees (SpecInfer; EAGLE-2 dynamic tree; Sequoia DP-optimal trees). EAGLE-2's tree already runs deep where draft confidence is high — a phase-<em>reactive</em> behavior any phase-state method must out-perform, not merely match.</p>
+        <h3>Memoryless entropy control already exists and is strong</h3>
+        <p>AdaEDL stops when <span class="math">1 − √(γ·H_DM)</span> falls below a threshold; SVIP derives the same Pinsker bound and reports +22% on QwQ at 8K. SpecKV reports the instantaneous draft-entropy↔acceptance correlation at <strong>ρ≈+0.56</strong> — a strong pointwise predictor. <span class="t" tabindex="0" data-g="hetero">HeteroSpec</span> (2505.13254) stratifies cumulative entropy to jointly tune depth and pruning width, training-free and EAGLE-compatible (~5.36× in long low-entropy runs) — the closest memoryless joint controller, and ~8 months prior to TALON. TALON, SAGE, GOOSE all do joint depth+width from the instantaneous signal. DSDE uses KLD-<em>variance</em> as a “regional stability” signal — the closest in spirit to phase persistence.</p>
+        <h3>The contradiction we resolve</h3>
+        <p>SpecKV's +0.56 (draft entropy, within a single setting) and Acceptance Dynamics' −0.18 (target entropy, across cognitive domains) point in opposite directions. The difference is plausibly <em>which entropy</em> and <em>within vs across trace</em> — exactly the decomposition no one has run. Attention Drift adds a third, attention-level null. AdaEAGLE already quantifies a ~29% oracle gap for adaptive <em>length</em> alone, so any phase-oracle headroom must be reported net of what adaptive-length oracles already capture.</p>
+        <h3>Reasoning SD (orthogonal / stackable)</h3>
+        <p>SpecReason, Lookahead-Reasoning, RSD and SemanticSpec (“Beyond Tokens”, 2602.03708; lossless, R1-32B/QwQ-32B, 2.1–2.7×, <em>probes internal states</em>) operate at step/semantic granularity. SemanticSpec is also the precedent for our analysis-only hidden-state probe.</p>
+      </div>
+    </section>
+
+    <!-- 5 LIMITATIONS -->
+    <section class="section" id="limits">
+      <div class="kicker">05 — Limitations of prior work</div>
+      <h2><span class="chev">▾</span>The gap we exploit</h2>
+      <div class="secbody">
+        <ol>
+          <li><strong>The bimodal/phase claim is asserted, never tested under autocorrelation.</strong> Histograms and qualitative two-population descriptions exist (Beyond-80/20, PEAR; LESS even notes “contiguous low-entropy segments”), but no bimodality test with an autocorrelation-preserving null, no run-length characterization, no separation of marginal shape from temporal structure.</li>
+          <li><strong>The draft-vs-target, within-vs-across decomposition has not been run</strong>, leaving the +0.56 / −0.18 contradiction unresolved.</li>
+          <li><strong>No one has tested whether a latent state (vs the instantaneous level) carries incremental acceptance information.</strong> Existing methods all condition on the instantaneous signal; whether trajectory-level state adds anything is unmeasured.</li>
+          <li><strong>Adaptive control is memoryless.</strong> AdaEDL/SVIP/HeteroSpec/TALON/SAGE/GOOSE react to the instantaneous signal; DSDE uses variance but for length only. The oracle-vs-causal gap for a phase state is unmeasured.</li>
+        </ol>
+        <p class="pull">The exploitable gap is (2)+(3): the reconciliation, and the state-vs-level test — both unoccupied, both sign-robust in value.</p>
+        <p>The controller mechanism (limitation 4) is occupied and is therefore a demonstration, not a headline.</p>
+      </div>
+    </section>
+
+    <!-- 6 APPROACH -->
+    <section class="section" id="approach">
+      <div class="kicker">06 — Proposed idea / approach</div>
+      <h2><span class="chev">▾</span>One signal, four contributions</h2>
+      <div class="secbody">
+        <p class="lede">Per token we log the drafter's full next-token distribution and entropy (and top-1 prob), and the target's entropy. The pipeline runs on <strong>drafter entropy as primary</strong> (deployable) and <strong>target entropy in parallel</strong> (for the reconciliation). Click a stage to see what it does.</p>
+
+        <figure class="reveal">
+          <div class="fig">
+            <div class="figtitle"><span class="dot"></span> The approach, end to end</div>
+            <div class="stageflow"><span>raw signal</span><span>→</span><span>measure</span><span>→</span><span>reconcile</span><span>→</span><span>the core test</span><span>→</span><span>demonstrate</span></div>
+            <div class="pipe" id="pipe">
+              <button class="stage" data-s="0"><div class="sn">SIGNAL</div><div class="st">Per-token entropy</div><div class="sd">draft &amp; target, full logits</div></button>
+              <button class="stage" data-s="1"><div class="sn">C1</div><div class="st">Phase structure</div><div class="sd">tested, not assumed</div></button>
+              <button class="stage" data-s="2"><div class="sn">C2 · safe</div><div class="st">Reconciliation</div><div class="sd">the 2×2 decomposition</div></button>
+              <button class="stage" data-s="3"><div class="sn">C3 · core</div><div class="st">State vs level</div><div class="sd">acausal HMM test</div></button>
+              <button class="stage" data-s="4"><div class="sn">C4 · demo</div><div class="st">Controller</div><div class="sd">bounded demonstration</div></button>
+            </div>
+            <div class="stagedetail" id="stagedetail"></div>
+            <figcaption>The measurement (C1–C3) is the contribution; the controller (C4) is a bounded demonstration that only runs if the core test finds signal to recover.</figcaption>
+          </div>
+        </figure>
+
+        <figure class="reveal">
+          <div class="fig">
+            <div class="figtitle"><span class="dot"></span> The object of study · entropy, its smoothing, and the latent state</div>
+            <div id="state-wrap"></div>
+            <figcaption>Raw per-token entropy (faint), the <span style="color:var(--rust)">causal smoothing</span> current methods already use, and the <span style="color:var(--sage)">latent phase state</span> inferred from the <em>whole</em> trajectory. C3 asks whether the shaded state predicts acceptance beyond the smoothing.</figcaption>
+          </div>
+        </figure>
+
+        <h3>C1 — Phase structure, tested correctly</h3>
+        <p>Unit = the trace. Per-trace Hartigan's dip judged against an <span class="t" tabindex="0" data-g="autoc">autocorrelation-preserving null</span> (stationary/block bootstrap with Politis–White block length; an AR/single-state-HMM surrogate matching the empirical autocorrelation), reporting the dip-statistic distribution, the fraction of traces rejecting unimodality, and <span class="math">n_eff</span>. Two distinct sub-hypotheses: marginal bimodality (GMM/BIC, Silverman) and two-phase temporal structure (2-state HMM / PELT beats a memoryless model; run-lengths vs a geometric null). Artifact controls: re-run with formatting/cue tokens masked, and within a single homogeneous <span class="math">&lt;think&gt;</span> span.</p>
+
+        <h3>C2 — The reconciliation <span class="badge safe">sign-robust headline</span></h3>
+        <p>Under a single fixed (L,B) configuration, estimate the entropy↔acceptance relationship in a 2×2 design: {draft, target} entropy × {within-trace, across-trace}, controlling for position and tree depth. The hypothesis: draft-entropy-within-trace is the strongly-predictive cell (reproducing SpecKV's ~0.56) while target-entropy-across-domain is the weak/negative cell (reproducing Acceptance Dynamics' −0.18). <strong>This stands whether or not any latent phase state exists</strong> — which is why it anchors the paper.</p>
+
+        <h3>C3 — The state-vs-level test <span class="badge core">the core question</span></h3>
+        <ul>
+          <li><strong>The latent state.</strong> The scientific phase label is the posterior state of a 2-state <span class="t" tabindex="0" data-g="hmm">HMM</span> fit by forward–backward — it uses the <em>whole</em> trajectory, so it is <strong>not</strong> a deterministic function of the causal instantaneous signal and can carry incremental information. (A causal threshold of a smoothing — the deployable detector — provably cannot; we use it only for C4.)</li>
+          <li><strong>Measurement under fixed drafting.</strong> SD is run with a single phase-agnostic (L,B) so accepted-run length is measured under identical caps; we run several L values and report the censored fraction per phase.</li>
+          <li><strong>The conditional test.</strong> A censoring-aware discrete-time survival model (cloglog link; the L-cap as censoring) for accepted-run length, with per-trace random effects, a spline in position, and tree depth as covariates. Nested predictors: (a) instantaneous confidence/entropy + the AdaEDL bound; (b) + a bandwidth-matched causal EWMA of entropy; (c) + the latent HMM phase state. <strong>The state matters only if it adds significant incremental value over both (a) and (b)</strong> — a time-dependent C-index with CIs and LR tests under multiplicity correction.</li>
+          <li><strong>Drafter-blind confirmation (analysis-only).</strong> We test whether a phase label from signals the drafter does not see — a lexical-cue detector (training-free) and an offline probe on target hidden states (explicitly analysis-only; SemanticSpec precedent) — also predicts acceptance. We <strong>earn the word “state”</strong> only if a drafter-blind label also predicts; absent that, we report the weaker, still-honest claim.</li>
+        </ul>
+
+        <h3>C4 — Controller <span class="badge">bounded demonstration</span></h3>
+        <p>A training-free causal detector (EWMA of draft entropy with a hysteresis band) drives a small interpretable phase→(depth/width split) policy under a fixed node budget. All hyperparameters are fit on calibration, selected on validation, and frozen before any test number. We report the <em>oracle-vs-online gap</em>: how much of the acausal HMM-state's value the causal detector recovers — net of an adaptive-length oracle, and over EAGLE-3 and HeteroSpec, not just vanilla.</p>
+
+        <h3>Losslessness</h3>
+        <p>A proof obligation that dynamic (L,B) leaves the accept/resample rule unchanged; direct verification of the sampler invariant on logged (p,q); a TOST equivalence test (pre-registered tolerance ε = the Monte-Carlo CI width at M resamples) with <strong>Holm (FWER)</strong> control across positions; greedy behavioral equality; and an EQSPEC ragged-tensor check at batch&gt;1.</p>
+      </div>
+    </section>
+
+    <!-- 7 HYPOTHESES -->
+    <section class="section" id="hypotheses">
+      <div class="kicker">07 — Hypotheses</div>
+      <h2><span class="chev">▾</span>Four falsifiable claims</h2>
+      <div class="secbody">
+        <p>Each card carries its own built-in falsifier. H1, H2, H3 stand or fall independently of H4; H2 stands independent of H3. The paper leads with whichever hold and reports negatives plainly. Tap a card to expand.</p>
+        <div class="hcards" id="hcards"></div>
+      </div>
+    </section>
+
+    <!-- 8 PLAN -->
+    <section class="section" id="plan">
+      <div class="kicker">08 — Experimental plan</div>
+      <h2><span class="chev">▾</span>A deliverable frozen core, then an extended tier</h2>
+      <div class="secbody">
+        <p class="lede">Everything is split into a <span style="color:var(--rust)">frozen core</span> sized for 14 weeks on a single node, and an <span style="color:var(--ink-soft)">extended tier</span> that is explicitly optional. The contribution does not depend on the extended tier completing.</p>
+
+        <div class="tabs" role="tablist" id="plantabs">
+          <button class="tab on" data-p="baselines" role="tab">Baselines</button>
+          <button class="tab" data-p="models" role="tab">Models</button>
+          <button class="tab" data-p="datasets" role="tab">Datasets</button>
+          <button class="tab" data-p="metrics" role="tab">Metrics</button>
+          <button class="tab" data-p="ablations" role="tab">Ablations</button>
+          <button class="tab" data-p="compute" role="tab">Compute</button>
+        </div>
+
+        <div class="tabpanel" id="p-baselines" role="tabpanel">
+          <table>
+            <thead><tr><th>Baseline</th><th>What it does</th><th>Why it's here</th><th>Tier</th></tr></thead>
+            <tbody>
+              <tr><td><b>Vanilla AR</b></td><td>One token per pass</td><td>The latency floor everything is measured against</td><td><span class="tier core">core</span></td></tr>
+              <tr><td><b>Vanilla SD</b></td><td>Fixed draft length, single chain</td><td>The 2023 reference point</td><td><span class="tier core">core</span></td></tr>
+              <tr><td><b>AdaEDL</b></td><td>Entropy lower-bound stop on draft length</td><td>The headline “entropy→length” memoryless rule</td><td><span class="tier core">core</span></td></tr>
+              <tr><td><b>SVIP</b></td><td>Pinsker-bound entropy stop, on reasoning</td><td>Closest entropy-length predecessor tested on CoT</td><td><span class="tier core">core</span></td></tr>
+              <tr><td><b>HeteroSpec</b></td><td>Cumulative entropy → joint depth+width</td><td>The strongest memoryless joint controller to beat</td><td><span class="tier core">core</span></td></tr>
+              <tr><td><b>EAGLE-2 / EAGLE-3</b></td><td>Dynamic confidence-scored tree; SOTA drafter</td><td>The production standard; we stack on and compare</td><td><span class="tier core">core</span></td></tr>
+              <tr><td><b>TALON / SAGE</b></td><td>Joint depth+width from instantaneous signal</td><td>2026 joint-control SOTA, as reimplementations</td><td><span class="tier ext">extended</span></td></tr>
+              <tr><td><b>DSDE</b></td><td>KLD-variance “regional stability” + length cap</td><td>Closest temporal-aggregation comparison</td><td><span class="tier ext">extended</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tabpanel" id="p-models" role="tabpanel" hidden>
+          <table>
+            <thead><tr><th>Role</th><th>Model</th><th>Notes</th><th>Tier</th></tr></thead>
+            <tbody>
+              <tr><td><b>Core target</b></td><td>DeepSeek-R1-Distill-Qwen-7B</td><td>The single primary reasoning model for the powered core test</td><td><span class="tier core">core</span></td></tr>
+              <tr><td><b>Drafters</b></td><td>R1-Distill-1.5B + EAGLE-3 heads</td><td>≥2 drafter types, since the entropy↔acceptance map is drafter-dependent (LK-Losses)</td><td><span class="tier core">core</span></td></tr>
+              <tr><td><b>Specificity check</b></td><td>Instruct sibling</td><td>Reported with the caveat that thinking/instruct formatting density is hard to match</td><td><span class="tier core">core</span></td></tr>
+              <tr><td><b>Scale replication</b></td><td>R1-Distill-14B, Qwen3-8B-thinking</td><td>Replication, not population inference</td><td><span class="tier ext">extended</span></td></tr>
+              <tr><td><b>Stretch</b></td><td>QwQ-32B (AWQ-INT4)</td><td>If time and memory permit</td><td><span class="tier ext">extended</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tabpanel" id="p-datasets" role="tabpanel" hidden>
+          <table>
+            <thead><tr><th>Dataset</th><th>Why</th><th>Tier</th></tr></thead>
+            <tbody>
+              <tr><td><b>MATH-500</b></td><td>Core math reasoning traces</td><td><span class="tier core">core</span></td></tr>
+              <tr><td><b>LiveCodeBench</b></td><td>Core code reasoning traces</td><td><span class="tier core">core</span></td></tr>
+              <tr><td><b>GSM8K, AIME-2024/2025</b></td><td>Additional math difficulty range</td><td><span class="tier ext">extended</span></td></tr>
+              <tr><td><b>HumanEval, MBPP</b></td><td>Additional code coverage</td><td><span class="tier ext">extended</span></td></tr>
+              <tr><td><b>MT-Bench / chat</b></td><td>Negative control — phases should be weak here</td><td><span class="tier ext">extended</span></td></tr>
+            </tbody>
+          </table>
+          <p style="padding:14px 16px;margin:0;font-size:.92rem;color:var(--ink-soft)">Corpus split into calibration / validation / test, sized by a pilot ICC / autocorrelation power analysis for the H3 incremental-C-index effect.</p>
+        </div>
+        <div class="tabpanel" id="p-metrics" role="tabpanel" hidden>
+          <table>
+            <thead><tr><th>Family</th><th>Metric</th></tr></thead>
+            <tbody>
+              <tr><td><b>Science</b></td><td>Per-trace dip-statistic distribution + rejection fraction vs the autocorrelation-preserving null; 2-state-vs-1-state LR; run-length vs geometric</td></tr>
+              <tr><td><b>Science · core number</b></td><td><b>Incremental C-index of the latent state</b> over instantaneous confidence and a matched EWMA, with multiplicity-corrected significance; drafter-blind-phase predictive AUC; the 2×2 entropy↔acceptance table (H2)</td></tr>
+              <tr><td><b>Systems</b></td><td>τ overall / per-phase; speedup at <b>matched FLOPs and matched wall-clock</b>; oracle-phase headroom over EAGLE-3 and HeteroSpec, net of an adaptive-length oracle; online-detector recovered fraction; memory overhead</td></tr>
+              <tr><td><b>Losslessness</b></td><td>Sampler-invariant check; TOST equivalence (ε = MC CI width at M) with Holm/FWER; greedy behavioral equality; EQSPEC at batch&gt;1</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tabpanel" id="p-ablations" role="tabpanel" hidden>
+          <table>
+            <thead><tr><th>#</th><th>Ablation</th><th>Tier</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Phase-state vs best memoryless per-token entropy-length at matched width and FLOPs</td><td><span class="tier core">core</span></td></tr>
+              <tr><td>2</td><td>Length-only phase control vs SVIP</td><td><span class="tier core">core</span></td></tr>
+              <tr><td>3</td><td>Detector: EWMA-hysteresis vs single-threshold (≈SVIP) vs lexical-cue vs oracle HMM state</td><td><span class="tier core">core</span></td></tr>
+              <tr><td>4</td><td>Hysteresis on/off, boundary-resolved (does persistence help <em>at</em> execution→decision, or lag it?)</td><td><span class="tier core">core</span></td></tr>
+              <tr><td>5+</td><td>Width-only; thinking-vs-instruct length-matched; standalone vs stacked on EAGLE-3; draft-vs-target signal; threshold/budget sensitivity</td><td><span class="tier ext">extended</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tabpanel" id="p-compute" role="tabpanel" hidden>
+          <div style="padding:18px 18px">
+            <p style="margin:0 0 .6em">Single node: <b>3× A6000 (48GB) + 1× A5000</b> via Slurm.</p>
+            <p style="margin:0 0 .6em">Core cost: one 7B target + 1.5B drafter, two datasets, T=0, ~5 baselines at batch 1, plus the (cheap, logits-already-produced) statistics and an oracle-phase simulation. The TOST equivalence runs M≈200 resamples per prompt on a <em>subset</em> of prompts only.</p>
+            <p style="margin:0"><b>Estimated frozen core: tens of GPU-hours.</b> We confirm the 7B + drafter + KV fits one A6000 before committing; the extended tier is explicitly optional.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 EXPECTED -->
+    <section class="section" id="expected">
+      <div class="kicker">09 — Expected results</div>
+      <h2><span class="chev">▾</span>What would confirm or falsify each claim</h2>
+      <div class="secbody">
+        <table style="border:1px solid var(--line); border-radius:12px; overflow:hidden; margin-top:1em">
+          <thead><tr><th>Hypothesis</th><th>Expected outcome</th></tr></thead>
+          <tbody>
+            <tr><td><b>H1</b> structure</td><td>Majority of traces reject unimodality vs the autocorrelation-preserving null; 2-state temporal model wins; survives masking and the within-<span class="math">&lt;think&gt;</span> restriction. <em>Else falsified.</em></td></tr>
+            <tr><td><b>H2</b> <span class="badge safe">expected to hold</span></td><td>The 2×2 cleanly separates draft-within (strong +) from target-across (weak −), resolving the contradiction. The result we are most confident in; it anchors the paper.</td></tr>
+            <tr><td><b>H3</b> <span class="badge core">genuinely uncertain — the point</span></td><td>Either the latent state adds significant incremental C-index (→ “a real phase <em>state</em> exists; build causal detectors”) or it does not (→ “<em>level, not state</em>; memoryless-on-smoothed-entropy is near-optimal”). Both are publishable; we are powered to tell them apart.</td></tr>
+            <tr><td><b>H4</b> controller</td><td>If H3 is positive, a causal detector recovers a positive, FLOP/wall-clock-matched fraction of the oracle gain; we report the oracle-vs-online gap and the EAGLE-3-stacked number, even if small or null.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 10 RISKS -->
+    <section class="section" id="risks">
+      <div class="kicker">10 — Risks &amp; mitigations</div>
+      <h2><span class="chev">▾</span>Ten ways this could go wrong, and the answer to each</h2>
+      <div class="secbody" id="risklist"></div>
+    </section>
+
+    <!-- 11 TIMELINE -->
+    <section class="section" id="timeline">
+      <div class="kicker">11 — Timeline</div>
+      <h2><span class="chev">▾</span>≈14 weeks, with two hard gates</h2>
+      <div class="secbody">
+        <div class="timeline" id="timeline"></div>
+        <h3 style="margin-top:1.4em">Venues</h3>
+        <div class="venues">
+          <div class="vchip"><div class="vn">AAAI-27 Student Abstract</div><div class="vm">~Sept 2026 · 2pg archival · floor · stands on H1+H2</div></div>
+          <div class="vchip primary"><div class="vn">NeurIPS ENLSP 2026</div><div class="vm">~mid-Sept · 4pg non-archival · primary target</div></div>
+          <div class="vchip"><div class="vn">ICML ES-FoMo 2027</div><div class="vm">fallback</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 REFERENCES -->
+    <section class="section" id="refs">
+      <div class="kicker">12 — References</div>
+      <h2><span class="chev">▾</span>References <span style="font-size:.6em;color:var(--ink-faint);font-family:var(--mono);letter-spacing:.1em">arXiv IDs verified</span></h2>
+      <div class="secbody">
+        <p class="note">Consistent with <code>lit_review.md</code>; every arXiv ID was resolved against its primary source. A handful of 2026 figures are single-source and provisional, flagged in the review. Click any ID to open the source.</p>
+        <div class="refs" id="refs"></div>
+      </div>
+    </section>
+
+    <div class="footer">
+      <p>Prepared with AI-assisted literature search and drafting, and hardened across three adversarial review rounds. All cited arXiv IDs were resolved against primary sources; items not fully verified are flagged in the literature review. Reported numbers are quoted from the cited works and should be re-checked before camera-ready.</p>
+      <p><a href="lit_review.html">← Read the literature tour</a> &nbsp;·&nbsp; <a href="#top">↑ Back to top</a></p>
+    </div>
+  </main>
+</div>
+
+<div class="jnav">
+  <button class="jbtn" id="prev" aria-label="Previous section">↑</button>
+  <button class="jbtn" id="next" aria-label="Next section">↓</button>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script>
+"use strict";
+(function(){
+  var RM=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  var $=function(s,r){return (r||document).querySelector(s);};
+  var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
+  function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+
+  /* ---------- glossary / tooltips ---------- */
+  var GLOSS={
+    lossless:{t:"Lossless",d:"Distribution-preserving: over many runs the sped-up model emits text with exactly the same probabilities as the slow target. No quality is traded away."},
+    cot:{t:"Chain-of-thought (CoT)",d:"The long step-by-step reasoning a model writes before its final answer. Reasoning models emit a lot of it, so decode speed dominates their latency."},
+    hmm:{t:"Hidden-state model (HMM)",d:"A model that infers a hidden 'phase' label per token from the whole sequence — past and future. Because it uses the future, it can capture structure a causal smoother cannot."},
+    hetero:{t:"HeteroSpec",d:"The closest memoryless joint controller: it stratifies cumulative entropy to set draft depth and tree width together, training-free and EAGLE-compatible (~5.36×)."},
+    autoc:{t:"Autocorrelation-preserving null",d:"A statistical null that keeps the time-correlation of the real data (via block bootstrap or an AR/HMM surrogate), so 'bimodality' can't be a mirage created by smooth drift."}
+  };
+  var tip=$('#tip'),tt=null,pinned=false;
+  function show(n){var g=GLOSS[n.getAttribute('data-g')]; if(!g)return; tip.innerHTML='<b>'+g.t+'</b>'+g.d; var r=n.getBoundingClientRect(); tip.classList.add('show'); var tw=tip.offsetWidth,th=tip.offsetHeight; var l=Math.min(Math.max(8,r.left),window.innerWidth-tw-8); var tp=r.top-th-10; if(tp<8)tp=r.bottom+10; tip.style.left=l+'px'; tip.style.top=tp+'px';}
+  function hide(){if(!pinned)tip.classList.remove('show');}
+  $$('.t').forEach(function(n){
+    n.addEventListener('mouseenter',function(){clearTimeout(tt);pinned=false;show(n);});
+    n.addEventListener('mouseleave',function(){tt=setTimeout(hide,120);});
+    n.addEventListener('focus',function(){pinned=false;show(n);}); n.addEventListener('blur',hide);
+    n.addEventListener('click',function(e){e.preventDefault();pinned=true;show(n);});
+  });
+  tip.addEventListener('mouseenter',function(){clearTimeout(tt);}); tip.addEventListener('mouseleave',hide);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){pinned=false;hide();}});
+
+  /* ---------- progress + toc active ---------- */
+  var prog=$('#progress');
+  function sc(){var h=document.documentElement,m=h.scrollHeight-h.clientHeight; prog.style.width=(m>0?h.scrollTop/m*100:0)+'%';}
+  window.addEventListener('scroll',sc,{passive:true}); sc();
+  var secs=$$('main .section'),links=$$('.toc a[data-sec]');
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){var id=en.target.id; links.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+id);});}});},{rootMargin:'-40% 0px -55% 0px'});
+    secs.forEach(function(s){io.observe(s);});
+    var rio=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting)en.target.classList.add('show');});},{rootMargin:'0px 0px -8% 0px'});
+    $$('.reveal').forEach(function(n){rio.observe(n);});
+  } else {$$('.reveal').forEach(function(n){n.classList.add('show');});}
+
+  /* ---------- collapsible sections ---------- */
+  $$('.section h2').forEach(function(h){h.addEventListener('click',function(){h.parentElement.classList.toggle('collapsed');});
+    h.setAttribute('tabindex','0'); h.setAttribute('role','button');
+    h.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault(); h.parentElement.classList.toggle('collapsed');}});});
+  var allCollapsed=false;
+  $('#toggleall').addEventListener('click',function(e){e.preventDefault(); allCollapsed=!allCollapsed; $$('.section').forEach(function(s){if(s.id!=='abstract')s.classList.toggle('collapsed',allCollapsed);}); });
+
+  /* ---------- mobile menu ---------- */
+  var toc=$('#toc'),scrim=$('#scrim');
+  $('#menubtn').addEventListener('click',function(){toc.classList.add('open');scrim.classList.add('show');});
+  scrim.addEventListener('click',function(){toc.classList.remove('open');scrim.classList.remove('show');});
+  $$('.toc a').forEach(function(a){a.addEventListener('click',function(){toc.classList.remove('open');scrim.classList.remove('show');});});
+
+  /* ---------- journey nav ---------- */
+  var ids=['top','abstract','motivation','impact','background','limits','approach','hypotheses','plan','expected','risks','timeline','refs'];
+  function cur(){var y=window.scrollY+window.innerHeight*0.3,b=0; ids.forEach(function(id,i){var n=document.getElementById(id); if(n&&n.offsetTop<=y)b=i;}); return b;}
+  function go(i){i=Math.max(0,Math.min(ids.length-1,i)); var n=document.getElementById(ids[i]); if(n)n.scrollIntoView({behavior:RM?'auto':'smooth'});}
+  $('#next').addEventListener('click',function(){go(cur()+1);}); $('#prev').addEventListener('click',function(){go(cur()-1);});
+  document.addEventListener('keydown',function(e){if(e.target.matches('input,textarea,summary'))return; if(e.key==='ArrowRight')go(cur()+1); else if(e.key==='ArrowLeft')go(cur()-1);});
+  function nav(){var i=cur(); $('#prev').disabled=i<=0; $('#next').disabled=i>=ids.length-1;} window.addEventListener('scroll',nav,{passive:true}); nav();
+
+  /* ---------- approach pipeline ---------- */
+  (function(){
+    var detail=$('#stagedetail'); if(!detail)return;
+    var D=[
+      {t:'The signal',d:'Per token we log the drafter’s full next-token distribution and entropy (and top-1 probability), plus the target’s entropy. Full untruncated logits; top-k sensitivity reported where truncation is unavoidable. Drafter entropy is primary (deployable); target entropy runs in parallel for the reconciliation.',tags:[['draft + target','tg'],['full logits','tg']]},
+      {t:'C1 · Phase structure, tested',d:'Using the trace as the unit and an autocorrelation-preserving null, test whether per-token entropy is bimodal (dip / GMM-BIC / Silverman) and segments into contiguous phases (2-state HMM / PELT beats memoryless; run-lengths vs geometric) — surviving formatting-token masking and a within-<think> restriction.',tags:[['statistics not histograms','tg']]},
+      {t:'C2 · The reconciliation',d:'A 2×2 design — {draft, target} entropy × {within-trace, across-trace} — controlling for position and tree depth, to show SpecKV’s +0.56 and Acceptance Dynamics’ −0.18 are two cells of one design. Holds regardless of the phase result.',tags:[['sign-robust','tg safe'],['headline','tg core']]},
+      {t:'C3 · State vs level',d:'Does the acausal HMM phase state add incremental predictive value for accepted-run length after conditioning on instantaneous confidence AND a bandwidth-matched causal EWMA? Censoring-aware survival model; time-dependent C-index; drafter-blind confirmation. Pre-registered to possibly return “level, not state.”',tags:[['the core test','tg core'],['powered either way','tg']]},
+      {t:'C4 · Controller (demonstration)',d:'Only if signal remains: a training-free EWMA-hysteresis detector drives a phase→(depth/width) policy, reported as the oracle-vs-online recovery gap at matched FLOPs and wall-clock, stacked on EAGLE-3 and HeteroSpec, fully lossless. Not the headline — a bounded demo.',tags:[['training-free','tg'],['bounded demo','tg']]}
+    ];
+    var stages=$$('#pipe .stage');
+    function sel(i){stages.forEach(function(s,j){s.classList.toggle('on',j===i);});
+      var d=D[i]; detail.innerHTML='<div class="dt">'+d.t+'</div><p class="dd">'+d.d+'</p><div class="tagrow">'+d.tags.map(function(t){return '<span class="'+t[1].replace('tg','tg ')+'">'+t[0]+'</span>';}).join('')+'</div>';}
+    stages.forEach(function(s,i){s.addEventListener('click',function(){sel(i);});}); sel(3);
+  })();
+
+  /* ---------- state-vs-level trace ---------- */
+  (function(){
+    var wrap=$('#state-wrap'); if(!wrap)return;
+    var W=620,H=200,pad=26,data=[],v=0.2,bursts={6:1,7:1,8:1,21:1,22:1,34:1,35:1,36:1};
+    for(var i=0;i<50;i++){var hi=bursts[i],tg=hi?0.8:0.2; v=v+(tg-v)*0.5+(Math.random()-0.5)*0.05; v=Math.max(.05,Math.min(.95,v)); data.push(v);}
+    var ew=[],e=data[0]; for(i=0;i<data.length;i++){e=0.7*e+0.3*data[i]; ew.push(e);}
+    function X(i){return pad+i/(data.length-1)*(W-2*pad);} function Y(v){return H-pad-v*(H-2*pad);}
+    var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Entropy, its causal smoothing, and the latent phase state">';
+    var inHi=false,st=0;
+    for(i=0;i<data.length;i++){var hi=data[i]>0.5; if(hi&&!inHi){inHi=true;st=i;} if((!hi||i===data.length-1)&&inHi){inHi=false; var x1=X(Math.max(0,st-0.5)),x2=X(Math.min(data.length-1,i-0.5)); s+='<rect x="'+x1+'" y="'+pad+'" width="'+(x2-x1)+'" height="'+(H-2*pad)+'" fill="rgba(95,122,107,.16)"/>';}}
+    var p1='',p2=''; for(i=0;i<data.length;i++){p1+=(i?'L':'M')+X(i).toFixed(1)+' '+Y(data[i]).toFixed(1)+' '; p2+=(i?'L':'M')+X(i).toFixed(1)+' '+Y(ew[i]).toFixed(1)+' ';}
+    s+='<path d="'+p1+'" fill="none" stroke="var(--ink-faint)" stroke-width="1.3" opacity=".55"/>';
+    s+='<path id="ewp" d="'+p2+'" fill="none" stroke="var(--rust)" stroke-width="2.4"/>';
+    s+='<text x="'+pad+'" y="15" font-family="var(--mono)" font-size="10" fill="var(--ink-faint)">entropy · <tspan fill="var(--rust)">causal EWMA</tspan> · <tspan fill="var(--sage)">▦ latent state</tspan></text>';
+    s+='<text x="'+(W-pad)+'" y="'+(H-7)+'" text-anchor="end" font-family="var(--mono)" font-size="10" fill="var(--ink-faint)">token position →</text></svg>';
+    wrap.innerHTML=s;
+    if(!RM){var p=$('#ewp'); if(p&&p.getTotalLength){var L=p.getTotalLength(); p.style.strokeDasharray=L; p.style.strokeDashoffset=L; p.getBoundingClientRect(); p.style.transition='stroke-dashoffset 2s ease'; setTimeout(function(){p.style.strokeDashoffset=0;},200);}}
+  })();
+
+  /* ---------- hypotheses ---------- */
+  var HYP=[
+    {h:'H1',badge:'',t:'Structure',claim:'Trace-level entropy rejects unimodality against an autocorrelation-preserving null on a majority of traces, and a 2-state temporal model beats a memoryless one (non-geometric run-lengths).',more:'Both survive formatting/cue masking and the within-<think> restriction. The trace is the unit of analysis; we report the dip-statistic distribution, rejection fraction, and effective sample size.',fals:'Falsified if masking removes bimodality or run-lengths are geometric.'},
+    {h:'H2',badge:'safe',t:'Reconciliation',claim:'The entropy↔acceptance relationship is strongly positive for draft-entropy-within-trace and weak/negative for target-entropy-across-domain.',more:'This reproduces SpecKV (+0.56) and Acceptance Dynamics (−0.18) as two cells of one 2×2 design, controlling for position and tree depth. It stands whether or not any latent phase state exists.',fals:'Falsified if the 2×2 does not separate the signs.'},
+    {h:'H3',badge:'core',t:'State vs level',claim:'The latent (acausal HMM) phase state adds significant incremental predictive value for accepted-run length after conditioning on instantaneous confidence and a bandwidth-matched causal EWMA.',more:'Incremental C-index with CI excluding 0; LR p<0.01 after correction; under fixed (L,B) with position and depth controlled; and a drafter-blind phase label independently predicts acceptance.',fals:'Falsified if the state adds nothing beyond the matched EWMA — reported as “level, not state,” itself a useful verdict.'},
+    {h:'H4',badge:'',t:'Controller',claim:'A training-free causal detector recovers a positive fraction of the oracle phase-state’s value as speedup over the strongest memoryless baseline (HeteroSpec/SVIP) at matched FLOPs and wall-clock, losslessly.',more:'We report the oracle-vs-online gap and whether any gain survives stacked on EAGLE-3. The controller’s only delta over occupied joint-control methods is causal recovery of an acausal state.',fals:'Falsified (for the controller, not the science) if no positive margin survives matching.'}
+  ];
+  (function(){
+    var host=$('#hcards'); if(!host)return;
+    HYP.forEach(function(o){
+      var c=el('div','hcard');
+      c.innerHTML='<span class="plus">＋</span><div class="hh">'+o.h+(o.badge?' <span class="badge '+o.badge+'">'+(o.badge==='safe'?'sign-robust':'core')+'</span>':'')+'</div><div class="ht">'+o.t+'</div><p class="hclaim">'+o.claim+'</p><div class="hmore">'+o.more+'<span class="hfals"><b>Falsified if</b> '+o.fals.replace('Falsified if ','').replace('Falsified (for the controller, not the science) if ','(controller only) ')+'</span></div>';
+      c.addEventListener('click',function(){c.classList.toggle('open'); c.querySelector('.plus').textContent=c.classList.contains('open')?'－':'＋';});
+      host.appendChild(c);
+    });
+  })();
+
+  /* ---------- plan tabs ---------- */
+  (function(){
+    var tabs=$$('#plantabs .tab'); if(!tabs.length)return;
+    tabs.forEach(function(tb){tb.addEventListener('click',function(){
+      tabs.forEach(function(x){x.classList.remove('on');}); tb.classList.add('on');
+      $$('.tabpanel').forEach(function(p){p.hidden=true;}); var pn=$('#p-'+tb.getAttribute('data-p')); if(pn)pn.hidden=false;
+    });});
+  })();
+
+  /* ---------- risks ---------- */
+  var RISK=[
+    ['R1','H3 test is rigged toward null because a thresholded-EWMA phase is a coarsening of the EWMA it must beat.','The scientific phase is the acausal HMM forward–backward state, not a causal threshold — it uses future context, so incremental information is possible. We pre-register that an EWMA-derived phase would tie, and route the science through the HMM state and drafter-blind labels.'],
+    ['R2','Likely outcome is “level, not state” → a negative result that confirms the status quo.','We make the sign-robust reconciliation (H2) the headline, which holds regardless; and we frame the H3 null sharply (“the field can stop adding hysteresis”) — a useful negative, not a non-result.'],
+    ['R3','Probe contradicts “training-free.”','The deployed controller is training-free (EWMA); the hidden-state probe is explicitly an analysis-only diagnostic, with the lexical-cue detector as the training-free drafter-blind check. SemanticSpec cited as precedent.'],
+    ['R4','Over-scoping → undeliverable / thin submission.','Explicit frozen core (1 model, 2 datasets, T=0, ~5 baselines, oracle headroom) vs extended tier; the contribution does not depend on the extended tier.'],
+    ['R5','Oracle headroom is small / absorbed by EAGLE-3 / double-counts adaptive-length.','Report it net of an adaptive-length oracle and over EAGLE-3 and HeteroSpec specifically; if <~5%, do not headline it — lead with H2 + the H3 verdict.'],
+    ['R6','Differential censoring at the L-cap confounds the fixed-(L,B) measurement.','Run multiple L; report censored fraction per phase; the survival model treats the cap as censoring rather than a value.'],
+    ['R7','Joint length+width control is occupied (HeteroSpec/TALON/SAGE/GOOSE/DSDE).','Conceded; C4 is a demonstration. The science (H1–H3) is the contribution; the controller’s only delta (causal recovery of an acausal state) is measured, not claimed.'],
+    ['R8','“Entropy↛acceptance” nulls (Acceptance Dynamics, Attention Drift).','We control for tree depth, run the draft/target 2×2, and use incremental C-index over a confidence predictor calibrated to SpecKV’s 0.56 (not “beating” a single correlation). Attention Drift measures a different entropy; distinguished.'],
+    ['R9','Losslessness disputed.','Proof obligation + sampler-invariant check + TOST equivalence (ε = MC CI width at M) with Holm/FWER across positions (BH only for exploratory multiplicity) + EQSPEC at batch>1.'],
+    ['R10','Underpowered / multiplicity.','Pilot ICC→n_eff power-sizing; “≥core model + replication” framed as case-study replication (the “≥2” threshold denotes replication, not population inference).']
+  ];
+  (function(){
+    var host=$('#risklist'); if(!host)return;
+    RISK.forEach(function(r){
+      var d=el('details','risk');
+      d.innerHTML='<summary><span class="rid">'+r[0]+'</span><span class="rtitle">'+r[1]+'</span><span class="rchev">▾</span></summary><div class="rbody"><span class="mit"><b>Mitigation</b> '+r[2]+'</span></div>';
+      host.appendChild(d);
+    });
+  })();
+
+  /* ---------- timeline ---------- */
+  var TL=[
+    ['Wk 1–2','Setup &amp; reproduction','EAGLE/SD env; reproduce an EAGLE-2/3 Spec-Bench number (±5%); finalize the related-work delta.','',''],
+    ['Wk 2–3','Instrumentation, corpus &amp; power','Log draft+target entropy, top-1, accept/reject, position, tree-depth, &lt;think&gt; boundary; pilot ICC→power-size the corpus; split.','',''],
+    ['Wk 3–7','H1 + H2 + H3 (frozen core)','Trace-level bimodality with the autocorrelation null; the draft/target × within/across 2×2; the acausal-state conditional C-index test; drafter-blind check.','gate','Gate ~Wk7 → lock AAAI-27 Student Abstract on H1 + H2 (+ the H3 verdict, either sign).'],
+    ['Wk 7–9','Controller + oracle headroom','EWMA-hysteresis detector; phase→split policy; frozen-threshold calibration; oracle-vs-online gap over EAGLE-3/HeteroSpec.','',''],
+    ['Wk 9–11','Lossless eval → workshop result','Losslessness (proof + invariant + TOST/Holm); core sweep at matched FLOPs/wall-clock; core ablations.','gate','Gate → H4 (or a clear oracle-headroom result), lossless.'],
+    ['Wk 11–12','Extended tier (optional)','14B/Qwen3 scales, T=0.6, TALON/SAGE/DSDE, lossy Pareto.','',''],
+    ['Wk 12–14','Writing &amp; submission','4-page paper (≥60% on H1–H3; controller one figure+table; lossy/extended in appendix); humanizer pass; staff-engineer review; code/corpus release.','write','']
+  ];
+  (function(){
+    var host=$('#timeline'); if(!host)return;
+    TL.forEach(function(r){
+      var row=el('div','tlrow');
+      var cls='tlbar'+(r[3]==='gate'?' gate':r[3]==='write'?' write':'');
+      row.innerHTML='<div class="wk">'+r[0]+'</div><div class="'+cls+'"><div class="tt">'+r[1]+'</div><div class="td">'+r[2]+'</div>'+(r[4]?'<span class="gmark">⚑ '+r[4]+'</span>':'')+'</div>';
+      host.appendChild(row);
+    });
+  })();
+
+  /* ---------- references ---------- */
+  var REFS=[
+    ['Leviathan et al.','Fast Inference via Speculative Decoding · ICML 2023','2211.17192'],
+    ['Chen et al.','Accelerating LLM Decoding with Speculative Sampling · 2023','2302.01318'],
+    ['Li et al.','EAGLE-1 / 2 / 3','2401.15077'],
+    ['Cai et al.','Medusa · ICML 2024','2401.10774'],
+    ['Chen et al.','Sequoia','2402.12374'],
+    ['Miao et al.','SpecInfer · ASPLOS 2024','2305.09781'],
+    ['Agrawal et al.','AdaEDL · ENLSP 2024','2410.18351'],
+    ['Zhang et al.','SVIP · EMNLP 2025','2411.18462'],
+    ['Liu et al.','HeteroSpec · 2025','2505.13254'],
+    ['Mamou et al.','DISCO','2405.04304'],
+    ['Huang et al.','SpecDec++ · COLM 2025','2405.19715'],
+    ['Liu/Lv et al.','TALON','2601.07353'],
+    ['Tong et al.','SAGE','2602.00523'],
+    ['Jin et al.','GOOSE','2604.02047'],
+    ['Wang et al.','OPT-Tree · TACL 2025','2406.17276'],
+    ['Yang et al.','DSDE','2509.01083'],
+    ['Shukla','SpecKV','2605.02888'],
+    ['Mahmoud','Acceptance Dynamics Across Cognitive Domains · 2026','2604.14682'],
+    ['—','Attention Drift · 2026','2605.09992'],
+    ['Wang et al.','Beyond the 80/20 Rule · NeurIPS 2025','2506.01939'],
+    ['Huang et al.','PEAR','2510.08026'],
+    ['Xia et al.','When Do LLMs Reason? (EDRM)','2605.22873'],
+    ['—','LESS','2512.00908'],
+    ['Devic et al.','Trace Length is a Simple Uncertainty Signal','2510.10409'],
+    ['Su et al.','EASD','2512.23765'],
+    ['Pan et al.','SpecReason','2504.07891'],
+    ['Fu et al.','Scaling SD with Lookahead Reasoning','2506.19830'],
+    ['Liao et al.','RSD · ICML 2025','2501.19324'],
+    ['Yang et al.','LongSpec · ICML 2025','2502.17421'],
+    ['—','SemanticSpec / Beyond Tokens','2602.03708'],
+    ['Zhao et al.','SparseSpec','2512.01278'],
+    ['Holsman et al.','Fuzzy SD · ACL 2025 Findings','2502.20704'],
+    ['Zhang et al.','Batch SD Done Right (EQSPEC)','2510.22876'],
+    ['Liu et al.','Speculative Decoding: Performance or Illusion?','2601.11580'],
+    ['Sadhukhan et al.','MagicDec · ICLR 2025','2408.11049'],
+    ['Xia et al.','Spec-Bench · ACL 2024 Findings','hemingkx/Spec-Bench'],
+    ['Hu et al.','SD Survey','2502.19732'],
+    ['—','AdaEAGLE','2412.18910']
+  ];
+  (function(){
+    var host=$('#refs'); if(!host)return;
+    function url(a){return a.indexOf('/')>-1?('https://github.com/'+a):('https://arxiv.org/abs/'+a);}
+    REFS.forEach(function(r){
+      var d=el('div','refitem');
+      d.innerHTML='<span class="rk">'+r[2].replace('hemingkx/Spec-Bench','repo')+'</span><span class="rt"><b>'+r[0]+'</b> · '+r[1]+'</span><a href="'+url(r[2])+'" target="_blank" rel="noopener">open ↗</a>';
+      host.appendChild(d);
+    });
+  })();
+
+})();
+</script>
+  <script src="/lib/feedback.js" defer></script>
+</body>
+</html>
