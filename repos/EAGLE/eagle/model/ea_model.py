@@ -211,7 +211,6 @@ class EaModel(nn.Module):
             candidates,
             position,
             logits_processor,
-                draft_stats=None,
             log_metadata=None,
     ):
         try:
@@ -238,15 +237,9 @@ class EaModel(nn.Module):
             if tree_depth == 0:
                 tree_depth = int(accept_length)
 
-            logits_row = logits[best_candidate, accept_length].float()
-            target_probs = torch.softmax(torch.nan_to_num(logits_row, nan=-1e9, posinf=1e9, neginf=-1e9), dim=-1)
-            target_probs = torch.nan_to_num(target_probs, nan=0.0, posinf=0.0, neginf=0.0)
-            target_mass = target_probs.sum()
-            if float(target_mass.item()) > 0.0:
-                target_probs = target_probs / target_mass
-            target_entropy = float(
-                (-(target_probs * torch.log2(target_probs.clamp_min(torch.finfo(target_probs.dtype).tiny)))).sum().item()
-            )
+            logits_row = logits[best_candidate, accept_length]
+            target_probs = torch.softmax(logits_row, dim=-1)
+            target_entropy = float((-(target_probs * torch.log2(target_probs.clamp(min=1e-12))).sum()).item())
 
             if logits_processor is not None:
                 proc_logits = logits_processor(None, logits_row[None, :])[0]
@@ -264,39 +257,22 @@ class EaModel(nn.Module):
                     "logit": float(top_val),
                 })
 
-            draft_entropy = None
-            draft_top1_prob = None
-            draft_topk_probs = []
-
-            if isinstance(draft_stats, dict):
-                draft_entropy = float(draft_stats.get("draft_entropy")) if draft_stats.get("draft_entropy") is not None else None
-                draft_top1_prob = float(draft_stats.get("draft_top1_prob")) if draft_stats.get("draft_top1_prob") is not None else None
-                for item in draft_stats.get("draft_topk_probs", []) or []:
-                    if not isinstance(item, dict) or item.get("id") is None:
-                        continue
-                    tid = int(item["id"])
-                    draft_topk_probs.append({
-                        "id": tid,
-                        "token": self.tokenizer.decode([tid], clean_up_tokenization_spaces=False).strip(),
-                        "prob": float(item.get("prob")) if item.get("prob") is not None else None,
-                    })
-            elif isinstance(sample_p, torch.Tensor):
-                sample_p_tensor = sample_p.squeeze().float()
+            if isinstance(sample_p, torch.Tensor):
+                sample_p_tensor = sample_p.squeeze()
                 if sample_p_tensor.ndim == 2 and sample_p_tensor.shape[0] == 1:
                     sample_p_tensor = sample_p_tensor[0]
-                sample_p_tensor = torch.nan_to_num(sample_p_tensor, nan=0.0, posinf=0.0, neginf=0.0)
                 if torch.is_floating_point(sample_p_tensor) and torch.all(sample_p_tensor >= 0) and abs(float(sample_p_tensor.sum().item()) - 1.0) < 1e-3:
                     draft_probs = sample_p_tensor
                 else:
                     draft_probs = torch.softmax(sample_p_tensor, dim=-1)
-                draft_probs = torch.nan_to_num(draft_probs.float(), nan=0.0, posinf=0.0, neginf=0.0)
-                draft_mass = draft_probs.sum()
-                if float(draft_mass.item()) > 0.0:
-                    draft_probs = draft_probs / draft_mass
-                draft_top1_prob = float(draft_probs.max().item())
-                draft_entropy = float(
-                    (-(draft_probs * torch.log2(draft_probs.clamp_min(torch.finfo(draft_probs.dtype).tiny)))).sum().item()
-                )
+            else:
+                draft_probs = None
+
+            draft_top1_prob = float(draft_probs.max().item()) if draft_probs is not None else None
+            draft_entropy = float((-(draft_probs * torch.log2(draft_probs.clamp(min=1e-12))).sum()).item()) if draft_probs is not None else None
+
+            draft_topk_probs = []
+            if draft_probs is not None:
                 d_k = min(32, draft_probs.shape[-1])
                 d_values, d_indices = torch.topk(draft_probs, d_k)
                 for top_id, top_prob in zip(d_indices.tolist(), d_values.tolist()):
@@ -402,7 +378,7 @@ class EaModel(nn.Module):
         input_len = input_ids.shape[1]
         reset_tree_mode(self)
         # prefill
-        draft_tokens, retrieve_indices, tree_mask, tree_position_ids, logits, hidden_state, sample_token, draft_stats = initialize_tree(
+        draft_tokens, retrieve_indices, tree_mask, tree_position_ids, logits, hidden_state, sample_token = initialize_tree(
             input_ids, self, past_key_values, logits_processor
         )
         new_token = 0
@@ -429,12 +405,10 @@ class EaModel(nn.Module):
             best_candidate, accept_length, sample_p = evaluate_posterior(
                 logits, candidates, logits_processor
             )
-            log_retrieve_indices = retrieve_indices
             # print(accept_length)
             prev_input_len = input_ids.shape[1]
             # Adjusting the input sequence, draft model forward
-            current_draft_stats = draft_stats
-            input_ids, draft_tokens, retrieve_indices, tree_mask, tree_position_ids, new_token, hidden_state, sample_token, draft_stats = update_inference_inputs(
+            input_ids, draft_tokens, retrieve_indices, tree_mask, tree_position_ids, new_token, hidden_state, sample_token = update_inference_inputs(
                 input_ids,
                 candidates,
                 best_candidate,
@@ -457,11 +431,10 @@ class EaModel(nn.Module):
                     accept_length,
                     sample_p,
                     hidden_state_new,
-                    log_retrieve_indices,
+                    retrieve_indices,
                     candidates,
                     prev_input_len,
                     logits_processor,
-                    draft_stats=current_draft_stats,
                     log_metadata=log_metadata,
                 )
 
@@ -604,7 +577,7 @@ class EaModel(nn.Module):
 
         input_len = input_ids.shape[1]
         reset_tree_mode(self)
-        draft_tokens, retrieve_indices, tree_mask, tree_position_ids, logits, hidden_state, sample_token, draft_stats = initialize_tree(
+        draft_tokens, retrieve_indices, tree_mask, tree_position_ids, logits, hidden_state, sample_token = initialize_tree(
             input_ids, self, past_key_values, logits_processor
         )
         new_token = 0
@@ -633,8 +606,7 @@ class EaModel(nn.Module):
             # print(accept_length)
             prev_input_len = input_ids.shape[1]
             # with Timer("update_inference_inputs"):
-            current_draft_stats = draft_stats
-            input_ids, draft_tokens, retrieve_indices, tree_mask, tree_position_ids, new_token, hidden_state, sample_token, draft_stats = update_inference_inputs(
+            input_ids, draft_tokens, retrieve_indices, tree_mask, tree_position_ids, new_token, hidden_state, sample_token = update_inference_inputs(
                 input_ids,
                 candidates,
                 best_candidate,
@@ -661,7 +633,6 @@ class EaModel(nn.Module):
                     candidates,
                     prev_input_len,
                     logits_processor,
-                    draft_stats=current_draft_stats,
                 )
 
             yield input_ids

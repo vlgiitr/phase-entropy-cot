@@ -28,7 +28,7 @@ published number to ±5%, and a finalized related-work delta.
 - [ ] Clone `hemingkx/Spec-Bench` into `repos/Spec-Bench`
 - [ ] (Fallback) Clone `pytorch-labs/gpt-fast` into `repos/gpt-fast`
 - [ ] Download into `models/`:
-  - `deepseek-ai/DeepSeek-R1-Distill-Qwen-7B` (primary target, ~15 GB bf16)
+  - `deepseek-ai/DeepSeek-R1-Distill-Llama-8B` (primary target, ~15 GB bf16)
   - `deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B` (drafter)
   - `AngelSlim/Qwen3-8B_eagle3` (EAGLE-3 head, second drafter)
   - `AngelSlim/Qwen3-1.7B_eagle3` (companion EAGLE head for Qwen3-8B target)
@@ -38,7 +38,7 @@ published number to ±5%, and a finalized related-work delta.
 ### P0.3 Reproduction
 - [ ] Run vanilla EAGLE-2 or EAGLE-3 on Spec-Bench with their default model;
   reproduce a published τ (acceptance length) within ±5%
-- [ ] Repeat on R1-Distill-7B + 1.5B drafter on MATH-500 (20 problems) at T=0;
+- [ ] Repeat on R1-Distill-Llama-8B + 1.5B drafter on MATH-500 (20 problems) at T=0;
   log τ baseline for our setting
 - [ ] **Gate proof:** reproduction table committed to `results/p0_repro.md`
 
@@ -94,7 +94,7 @@ analysis runs.
 
 ### P1.2 Pilot run + power
 - [ ] Generate **pilot corpus**: 30 MATH-500 + 20 LiveCodeBench traces on
-  R1-Distill-7B at T=0 (≈50 traces, ~100–300k token-rows)
+  R1-Distill-Llama-8B at T=0 (≈50 traces, ~100–300k token-rows)
 - [ ] Compute **ICC** of per-token entropy and acceptance: variance-within-trace
   vs variance-across-trace (via `statsmodels` MixedLM null model)
 - [ ] **Power analysis** for H3: simulate target effect size = +0.02 absolute
@@ -104,7 +104,7 @@ analysis runs.
 
 ### P1.3 Full corpus
 - [ ] Generate frozen-core corpus: **~200 MATH-500 + ~150 LiveCodeBench** at T=0
-  on R1-Distill-7B + R1-Distill-1.5B drafter (one combination; EAGLE-3 head
+  on R1-Distill-Llama-8B + R1-Distill-1.5B drafter (one combination; EAGLE-3 head
   variant logged separately as a second drafter, per H2's drafter-dependence)
 - [ ] Persist as Parquet partitioned by `(model, drafter, dataset, temperature, split)`
   under `corpus/v1/`
@@ -349,7 +349,7 @@ with the lossless guarantee verified to a high empirical bar.
 
 ### P4.2 Core sweep
 - [ ] Target × dataset × T grid (frozen core only):
-  `{R1-Distill-Qwen-7B} × {MATH-500, LiveCodeBench} × {T=0}`
+  `{R1-Distill-Llama-8B} × {MATH-500, LiveCodeBench} × {T=0}`
 - [ ] Drafter combinations: R1-Distill-1.5B (draft-model SD) **and** EAGLE-3 head
   stacked variant
 - [ ] **Baselines on identical setup**:

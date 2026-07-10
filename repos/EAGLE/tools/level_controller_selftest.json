@@ -1,0 +1,106 @@
+{
+  "controller": {
+    "calibration": {
+      "rows": 1440,
+      "mean_chosen_length": 1.0,
+      "tokens_per_call": 0.7861111111111111,
+      "rejection_rate": 0.21388888888888888
+    },
+    "validation": {
+      "rows": 1440,
+      "mean_chosen_length": 1.0,
+      "tokens_per_call": 0.76875,
+      "rejection_rate": 0.23125
+    },
+    "params": {
+      "entropy_mean": 2.1951385244000816,
+      "entropy_std": 0.5518145740228367,
+      "risk_bin_edges": [
+        -0.6270835492970359,
+        -0.4730883490631268,
+        -0.035373774091214005,
+        0.5929876593307417,
+        0.938775481518309
+      ],
+      "bin_lengths": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "lengths_desc": [
+        8,
+        6,
+        4,
+        2,
+        1
+      ]
+    },
+    "config": {
+      "alpha_entropy": 0.2,
+      "alpha_top1": 0.2,
+      "entropy_weight": 0.65,
+      "uncertainty_weight": 0.35,
+      "max_length": 8,
+      "min_length": 1,
+      "rejection_budget": 0.12,
+      "candidate_lengths": [
+        8,
+        6,
+        4,
+        2,
+        1
+      ]
+    }
+  },
+  "baselines": {
+    "fixed_L8": {
+      "rows": 1440,
+      "mean_chosen_length": 8.0,
+      "tokens_per_call": 3.2069444444444444,
+      "rejection_rate": 0.8166666666666667
+    },
+    "fixed_L6": {
+      "rows": 1440,
+      "mean_chosen_length": 6.0,
+      "tokens_per_call": 2.8041666666666667,
+      "rejection_rate": 0.7402777777777778
+    },
+    "fixed_L4": {
+      "rows": 1440,
+      "mean_chosen_length": 4.0,
+      "tokens_per_call": 2.2319444444444443,
+      "rejection_rate": 0.6180555555555556
+    },
+    "fixed_L2": {
+      "rows": 1440,
+      "mean_chosen_length": 2.0,
+      "tokens_per_call": 1.3701388888888888,
+      "rejection_rate": 0.39861111111111114
+    },
+    "fixed_L1": {
+      "rows": 1440,
+      "mean_chosen_length": 1.0,
+      "tokens_per_call": 0.76875,
+      "rejection_rate": 0.23125
+    }
+  },
+  "comparison": {
+    "best_tokens_per_call_baseline": "fixed_L8",
+    "controller_tokens_per_call": 0.76875,
+    "baseline_tokens_per_call": 3.2069444444444444,
+    "controller_rejection_rate": 0.23125,
+    "baseline_rejection_rate": 0.8166666666666667,
+    "tokens_per_call_delta": -2.438194444444444
+  },
+  "meta": {
+    "rows_total": 2880,
+    "rows_calibration": 1440,
+    "rows_validation": 1440,
+    "traces_total": 24,
+    "problems_total": 12,
+    "format": "synthetic"
+  }
+}

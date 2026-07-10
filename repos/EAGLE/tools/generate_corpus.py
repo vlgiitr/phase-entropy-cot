@@ -19,32 +19,10 @@ DATA_DIR = os.path.abspath(os.path.join(ROOT, '..', '..', 'data'))
 
 MATH_JSONL = os.path.join(DATA_DIR, 'math500', 'test.jsonl')
 LCB_JSONL = os.path.join(DATA_DIR, 'livecodebench', 'test.jsonl')
-MATH_ARROW_DIR = os.path.join(DATA_DIR, 'math500', 'test')
 LCB_ARROW_DIR = os.path.join(DATA_DIR, 'livecodebench', 'test')
 
 CORPUS_DIR = os.path.abspath(os.path.join(ROOT, '..', '..', 'corpus', 'v1'))
 os.makedirs(CORPUS_DIR, exist_ok=True)
-TRACE_DIR = os.path.join(CORPUS_DIR, 'traces')
-os.makedirs(TRACE_DIR, exist_ok=True)
-RUN_LOG = os.path.join(CORPUS_DIR, 'run.log')
-SUMMARY_JSON = os.path.join(CORPUS_DIR, 'summary.json')
-SUMMARY_JSONL = os.path.join(CORPUS_DIR, 'summary.jsonl')
-SKIP_EXISTING_TRACES = os.environ.get('SKIP_EXISTING_TRACES', '0').strip().lower() in {'1', 'true', 'yes', 'y'}
-
-
-def append_run_log(message):
-    stamp = time.strftime('%Y-%m-%d %H:%M:%S')
-    line = f"[{stamp}] {message}"
-    print(line)
-    with open(RUN_LOG, 'a', encoding='utf-8') as fh:
-        fh.write(line + '\n')
-
-
-def write_summary_json(summary_rows):
-    tmp_path = SUMMARY_JSON + '.tmp'
-    with open(tmp_path, 'w', encoding='utf-8') as fh:
-        json.dump(summary_rows, fh, indent=2)
-    os.replace(tmp_path, SUMMARY_JSON)
 
 def load_samples(path, n):
     out = []
@@ -123,17 +101,14 @@ def load_samples_from_arrow_dir(dirpath, n):
     return out
 
 
-append_run_log("Loading samples...")
-if os.path.exists(MATH_JSONL):
-    math_samples = load_samples(MATH_JSONL, 200)
-else:
-    math_samples = load_samples_from_arrow_dir(MATH_ARROW_DIR, 200)
+print("Loading samples...")
+math_samples = load_samples(MATH_JSONL, 200)
 if os.path.exists(LCB_JSONL):
     lcb_samples = load_samples(LCB_JSONL, 150)
 else:
     lcb_samples = load_samples_from_arrow_dir(LCB_ARROW_DIR, 150)
 
-append_run_log(f"Loaded: math500={len(math_samples)}, livecodebench={len(lcb_samples)}")
+print(f"Loaded: math500={len(math_samples)}, livecodebench={len(lcb_samples)}")
 
 samples = []
 for i, s in enumerate(math_samples):
@@ -142,10 +117,10 @@ for i, s in enumerate(lcb_samples):
     samples.append({'dataset': 'livecodebench', 'idx': i, 'obj': s})
 
 if not samples:
-    append_run_log('No samples found; aborting')
+    print('No samples found; aborting')
     sys.exit(1)
 
-append_run_log("Loading model...")
+print("Loading model...")
 model = EaModel.from_pretrained(
     use_eagle3=True,
     base_model_path=BASE_MODEL,
@@ -159,8 +134,7 @@ model = EaModel.from_pretrained(
 )
 
 device = next(model.base_model.parameters()).device
-append_run_log(f'Model loaded on {device}')
-append_run_log(f'Skip existing traces mode: {SKIP_EXISTING_TRACES}')
+print('Model loaded on', device)
 
 traces_by_sample = defaultdict(list)
 summary = []
@@ -169,11 +143,7 @@ for s in samples:
     ds = s['dataset']
     idx = s['idx']
     obj = s['obj']
-    trace_path = os.path.join(TRACE_DIR, f'trace_{ds}_{idx}.jsonl')
-    if SKIP_EXISTING_TRACES and os.path.exists(trace_path) and os.path.getsize(trace_path) > 0:
-        append_run_log(f'Skipping existing {ds} {idx}')
-        continue
-    append_run_log(f'Running {ds} {idx}')
+    print(f'Running {ds} {idx}')
     try:
         text = sample_to_text(obj)
         tokenized = model.tokenizer(
@@ -220,36 +190,21 @@ for s in samples:
         trace_lines = [json.loads(line) for line in trace_out.split('\n') if line.strip()]
         traces_by_sample[(ds, problem_id)] = trace_lines
 
-        # Persist per-trace rows immediately so interrupted runs keep progress.
-        with open(trace_path, 'w', encoding='utf-8') as fh:
-            if trace_out:
-                fh.write(trace_out)
-                fh.write('\n')
-
-        row_summary = {
+        summary.append({
             'dataset': ds,
             'idx': idx,
             'problem_id': problem_id,
             't_no_log': t_no_log,
             't_log': t_log,
             'trace_rows': len(trace_lines),
-            'trace_file': trace_path,
             'success': True
-        }
-        summary.append(row_summary)
-        with open(SUMMARY_JSONL, 'a', encoding='utf-8') as fh:
-            fh.write(json.dumps(row_summary) + '\n')
-        write_summary_json(summary)
-        append_run_log(f'Done {ds} {idx} t_no_log={t_no_log:.3f}s t_log={t_log:.3f}s rows={len(trace_lines)}')
+        })
+        print(f'Done {ds} {idx} t_no_log={t_no_log:.3f}s t_log={t_log:.3f}s rows={len(trace_lines)}')
     except Exception as e:
-        row_summary = {'dataset': ds, 'idx': idx, 'success': False, 'error': str(e)}
-        summary.append(row_summary)
-        with open(SUMMARY_JSONL, 'a', encoding='utf-8') as fh:
-            fh.write(json.dumps(row_summary) + '\n')
-        write_summary_json(summary)
-        append_run_log(f'ERROR {ds} {idx}: {e}')
+        print(f'ERROR {ds} {idx}: {e}')
+        summary.append({'dataset': ds, 'idx': idx, 'success': False, 'error': str(e)})
 
-append_run_log(f"Total successful traces: {sum(1 for s in summary if s['success'])}")
+print(f"\nTotal successful traces: {sum(1 for s in summary if s['success'])}")
 
 # Flatten traces into a single list with metadata
 all_traces = []
@@ -263,7 +218,7 @@ for (ds, problem_id), trace_rows in traces_by_sample.items():
         row['split'] = 'none'  # Will be assigned during split phase
         all_traces.append(row)
 
-append_run_log(f"Total trace rows: {len(all_traces)}")
+print(f"Total trace rows: {len(all_traces)}")
 
 if all_traces:
     df = pd.DataFrame(all_traces)
@@ -278,5 +233,5 @@ summary_file = os.path.join(CORPUS_DIR, 'summary.json')
 with open(summary_file, 'w') as f:
     json.dump(summary, f, indent=2)
 
-append_run_log(f"Corpus written to {CORPUS_DIR} (partitioned Parquet)")
-append_run_log(f"Summary written to {summary_file}")
+print(f"Corpus written to {CORPUS_DIR} (partitioned Parquet)")
+print(f"Summary written to {summary_file}")

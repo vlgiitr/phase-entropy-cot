@@ -1,0 +1,274 @@
+Implementation Log - Phase-Structured Entropy in CoT
+
+Date: 2026-07-10
+Project status source: user experiment log + workspace artifacts (pilot traces, analysis outputs, controller code)
+
+1. Models
+
+Target model: DeepSeek-R1-Distill-LLaMA-8B (deepseek-ai/DeepSeek-R1-Distill-Llama-8B)
+Draft model / EAGLE-3 head: yuhuili/EAGLE3-DeepSeek-R1-Distill-LLaMA-8B
+Tokenizer: LLaMA-based shared vocabulary between target and drafter
+
+2. Hardware and Precision
+
+Initial setup: T4 GPU (15 GB VRAM), Lightning AI.
+- 8-bit quantization was required for fit (BitsAndBytesConfig, load_in_8bit=True).
+- This introduced small numerical/logit noise and shifted acceptance rates relative to fp16.
+
+Main corpus + analysis runs: L4 GPU (23 GB VRAM), E2E Networks.
+- Precision: fp16 (torch.float16)
+- Quantization: none
+
+3. EAGLE Setup and Reproduction
+
+Repositories:
+- SafeAILab/EAGLE cloned
+- hemingkx/Spec-Bench cloned
+
+Key dependency/runtime fixes:
+- transformers pinned to 4.53.1
+- torchvision pinned to 0.19.1+cu121
+- load_in_8bit enabled in gen_ea_answer_ds.py for T4 compatibility
+- package install via editable mode (pip install -e --no-deps) to resolve imports
+
+Reproduction (T4, 8-bit, DeepSeek-R1-Distill-LLaMA-8B + EAGLE-3 head):
+- mt_bench speedup: 3.71x (reported baseline 4.05x)
+- gsm8k speedup: 4.12x (reported baseline 5.0x)
+- Temperature: 0.0 (greedy)
+- EAGLE-3 params: total_token=60, depth=5, top_k=10
+
+Attribution for reproduction gap:
+- T4 vs stronger benchmark hardware (A100/A6000)
+- 8-bit quantization effects
+
+4. Forensic Logger (P1.1)
+
+Status: Implemented in EAGLE decode path.
+
+Patch outcome:
+- Per-token JSON forensic rows emitted during eagenerate verification loop.
+- Metadata and token-level acceptance diagnostics logged for accepted/rejected positions.
+
+Logged fields include:
+- run_id, problem_id, model_name, drafter_name, temperature
+- position (global token index from prompt end)
+- token_id, token_str
+- target_entropy (Shannon entropy in bits, log base 2)
+- draft_entropy (bits)
+- draft_top1_prob
+- draft_topk_probs (top-32 draft probabilities)
+- accepted
+- tree_depth_at_accept
+- phase_label_hmm (null at logging time; for P2 backfill)
+
+5. Pilot Run (P1.2)
+
+Status: Completed with concrete artifacts (not placeholder).
+
+Pilot execution scope:
+- 30 MATH-500 traces + 20 LiveCodeBench traces
+- Total traces: 50
+- Success/fail: 50 / 0
+
+Verified pilot outputs:
+- summary.json
+- pilot_corpus.parquet
+- per-trace JSONL files for both datasets
+- analysis.json
+
+Pilot runtime summary (from summary.json):
+- t_no_log mean/median/min/max: 42.0150 / 42.6466 / 15.6292 / 54.1178 sec
+- t_log mean/median/min/max: 42.5648 / 43.2272 / 15.8296 / 54.8483 sec
+- mean absolute logging overhead: 0.5498 sec
+- mean overhead ratio (t_log / t_no_log): 1.0131 (~1.31% overhead)
+
+Pilot analysis snapshot (from analysis.json):
+- token rows: 22,149
+- valid draft_top1 rows: 20,264
+- accepted_rate: 0.6325
+- mean tree depth: 2.7734
+- trace length min/median/max: 171 / 448.5 / 559 rows
+- lag autocorr means: l1=0.1865, l2=0.1284, l3=0.0908, l4=0.0864, l5=0.0677
+- ICC proxy (top1 probability, icc1): 0.07138
+- pilot power estimate for +0.02 incremental C-index (alpha=0.05, target power=0.8):
+  estimated traces ~= 84
+
+Power-document synchronization status:
+- POWER.md finalized with pilot-derived ICC/autocorrelation/power estimates.
+- Locked power target used in planning: +0.02 incremental C-index at alpha=0.05, power=0.8.
+- Dependence-adjusted pilot estimate: required traces ~= 84.
+- Final approved corpus size lock recorded: 350 traces (200 MATH-500 + 150 LiveCodeBench).
+
+6. Full Corpus (P1.3)
+
+Datasets and scale:
+- MATH-500: 200 problems
+- LiveCodeBench: 150 problems
+- Total traces: 350
+- Total token-level rows: 236,235
+
+Run conditions:
+- Temperature: 0.0
+- Drafter: EAGLE-3 head (single-drafter corpus run)
+- Hardware: L4 fp16
+
+Storage and partitioning:
+- Parquet format
+- Partitioned by (model, drafter, dataset, temperature)
+
+Locked split by problem_id:
+- calibration/validation/test traces: 175 / 87 / 88
+- calibration/validation/test token rows: 116,892 / 59,205 / 60,138
+
+Corpus-level summary:
+- mean target_entropy: 0.8742 bits
+- mean draft_entropy: 5.1546 bits
+- mean accepted rate: 0.6530
+- mean tree_depth_at_accept: 3.0804
+- mean trace length: 674.96 token rows/problem
+
+7. Phase 2 Results (P2.A - H1)
+
+Data policy:
+- Frozen corpus
+- Calibration split used for H1 analyses
+
+P2.A.1 Marginal bimodality:
+- Hartigan Dip: 18.86% traces reject unimodality
+- GMM BIC (1 vs 2 component): 98.86% traces prefer 2 components
+- Silverman bandwidth: moderate rejection signal in calibration smoke runs (~19-31%)
+
+P2.A.2 Temporal phase structure:
+- 2-state HMM LR vs 1-state: 100.00% traces prefer 2-state model
+- PELT/run-length diagnostics: strong non-memoryless segmentation signal
+
+P2.A.3 Autocorrelation-preserving null checks:
+- block-bootstrap Dip null: no robust marginal bimodality confirmation
+- AR surrogate Dip: mixed significance
+- single-state HMM surrogate Dip: mixed
+
+Interpretation:
+- Marginal bimodality weakens under autocorrelation-preserving nulls.
+- Temporal phase organization is strong and persistent.
+- Entropy dynamics are phase-structured in time rather than memoryless IID draws.
+
+H1 verdict:
+- Phase structure confirmed.
+- Strict marginal bimodality not robustly confirmed.
+
+8. Phase 2 Results (P2.B - H2)
+
+Data policy:
+- Frozen corpus
+- Calibration + validation analyses; validation as primary reporting set
+
+Validation 2x2 reconciliation grid:
+- Cell A (draft entropy, within-trace): rho=-0.1251, 95% CI [-0.1431, -0.1069], significant
+- Cell B (draft entropy, across-trace): rho=-0.0334, 95% CI [-0.2456, +0.1983], not significant
+- Cell C (target entropy, within-trace): rho=-0.0126, 95% CI [-0.0225, -0.0026], significant but small
+- Cell D (target entropy, across-trace): rho=+0.1004, 95% CI [-0.1160, +0.3103], not significant
+
+Cell separation test:
+- Fisher z(A vs C): z=-19.466, p=0.000e+00
+
+Calibration cross-check:
+- A: rho=-0.1126, 95% CI [-0.1273, -0.0979], significant
+- B: rho=-0.0910, 95% CI [-0.2427, +0.0775], not significant
+- C: rho=-0.0071, 95% CI [-0.0143, +0.0001], near-null
+- D: rho=-0.1280, 95% CI [-0.2907, +0.0286], not significant
+
+Interpretation:
+- Strong within-trace draft-entropy association with acceptance.
+- Across-trace/domain effects remain weak and uncertainty-bounded.
+- Contradiction is resolved by explicit 2x2 decomposition.
+
+H2 verdict:
+- Partially confirmed (strong within-trace signal; across-trace effects weak at current N).
+
+9. Phase 2 Results (P2.C - H3)
+
+Data policy:
+- Calibration-to-validation generalization
+- Matched-bandwidth EWMA baseline vs latent HMM phase signal
+
+Setup:
+- train/eval traces: 175 / 87
+- train/eval rows: 116,892 / 59,205
+- matched EWMA alpha: 0.4050
+- HMM mean run length: 2.5457
+- bootstrap refit: True
+
+Validation model ladder:
+- M_a c-index: 0.850322
+- M_b c-index: 0.849275
+- M_c c-index: 0.848927
+- delta (M_c - M_b): -0.000348
+- bootstrap 95% CI(delta): [-0.002111, +0.001531]
+
+Likelihood-ratio tests:
+- M_b vs M_a: LR=32.2368, p=1.3648e-08
+- M_c vs M_b: LR=0.1767, p=6.7426e-01
+
+Collinearity diagnostics:
+- corr(analysis_entropy, hmm_gamma)=0.933333
+- condition number (M_c)=201.39
+
+Interpretation:
+- Causal level/smoothing captures most predictive gain.
+- Latent acausal state does not add held-out incremental discrimination under current setup.
+- Collinearity limits independent latent-state contribution.
+
+H3 verdict:
+- Not confirmed for incremental state-over-level gain on validation.
+
+10. Controller Work Completed (what is implemented now)
+
+Status: Baseline level-controller pipeline implemented (offline), tested; currently not a deployed online decode policy.
+
+Implemented module:
+- tools/level_controller.py
+
+Capabilities implemented:
+- Ingests parquet (hive partitions), JSONL traces, or synthetic data
+- Builds EWMA features from entropy and top-1 confidence
+- Fits risk bins on calibration split with global rejection-budget constraint
+- Chooses draft length from candidate set (default 8/6/4/2/1)
+- Evaluates controller vs fixed-length baselines with offline acceptance-run simulator
+- Exports JSON summary metrics
+
+Validation/testing status:
+- Unit tests implemented in tools/test_level_controller.py
+- Synthetic self-test artifact present (tools/level_controller_selftest.json)
+
+Synthetic self-test result snapshot:
+- Controller converged to conservative length profile (all bins L=1) under strict rejection budget (0.12)
+- Validation tokens_per_call: 0.76875
+- Validation rejection_rate: 0.23125
+- Best fixed baseline in synthetic run: L=8 with tokens_per_call 3.20694 but high rejection_rate 0.81667
+
+Interpretation of controller status:
+- Infrastructure for calibration/evaluation exists.
+- Real-corpus controller benchmarking remains pending.
+- Current implemented controller is explicitly level-based and aligns with H3 outcome framing.
+
+11. Current Evidence-Backed Status Summary
+
+Completed:
+- Environment/reproduction setup and baseline speedup reproduction
+- Forensic per-token logger patch
+- Pilot corpus generation and pilot analytics
+- Frozen full corpus with locked split
+- H1/H2/H3 analysis results and interpretations
+- Level-controller offline framework + tests
+
+Partially complete / pending:
+- Dedicated real-data controller benchmark table (matched compute/wall-clock) remains to be run
+
+12. Final Framing
+
+Primary scientific result:
+- CoT entropy is strongly phase-structured in time.
+- Incremental latent-state-over-level gain is not supported on current validation under matched smoothing controls.
+
+Operational result:
+- The project now has full logging, pilot evidence, frozen corpus, validated statistical tests, and an implemented level-controller baseline framework for next-stage benchmarking.
