@@ -223,33 +223,38 @@ H3 verdict:
 
 10. Controller Work Completed (what is implemented now)
 
-Status: Baseline level-controller pipeline implemented (offline), tested; currently not a deployed online decode policy.
+Status: Frozen-corpus offline level-controller pipeline implemented, validated on calibration/validation only, and saved as the current P3 controller artifact.
 
-Implemented module:
-- tools/level_controller.py
+Implemented modules and outputs:
+- repos/EAGLE/tools/level_controller.py
+- repos/EAGLE/tools/test_level_controller.py
+- controller_real_corpus_eval_v3_frozen.json
+- POLICY.md
 
-Capabilities implemented:
-- Ingests parquet (hive partitions), JSONL traces, or synthetic data
-- Builds EWMA features from entropy and top-1 confidence
-- Fits risk bins on calibration split with global rejection-budget constraint
-- Chooses draft length from candidate set (default 8/6/4/2/1)
-- Evaluates controller vs fixed-length baselines with offline acceptance-run simulator
-- Exports JSON summary metrics
+Final capabilities implemented:
+- Ingests the real frozen parquet corpus under corpus/v1
+- Uses locked split assignments so calibration and validation remain separated and the test split remains untouched
+- Builds EWMA features from draft entropy and top-1 confidence
+- Fits risk bins on calibration only
+- Selects draft length from candidate set 8/6/4/2/1 using normalized efficiency = tokens_per_call / (c_fixed + c_variable * L)
+- Freezes the provisional operating point at c_fixed = 4 and c_variable = 1
+- Applies the selected policy on validation and compares against fixed-length baselines
+- Replays an H3-feature oracle using the same candidate set and the same efficiency objective as the causal controller
+- Computes a cluster-bootstrap 95% CI for recovered_fraction on validation by run_id
+- Exports the frozen JSON artifact and policy note
 
 Validation/testing status:
-- Unit tests implemented in tools/test_level_controller.py
-- Synthetic self-test artifact present (tools/level_controller_selftest.json)
+- Unit tests pass in repos/EAGLE/tools/test_level_controller.py (10 passed)
+- Frozen evaluation artifact written to controller_real_corpus_eval_v3_frozen.json
 
-Synthetic self-test result snapshot:
-- Controller converged to conservative length profile (all bins L=1) under strict rejection budget (0.12)
-- Validation tokens_per_call: 0.76875
-- Validation rejection_rate: 0.23125
-- Best fixed baseline in synthetic run: L=8 with tokens_per_call 3.20694 but high rejection_rate 0.81667
-
-Interpretation of controller status:
-- Infrastructure for calibration/evaluation exists.
-- Real-corpus controller benchmarking remains pending.
-- Current implemented controller is explicitly level-based and aligns with H3 outcome framing.
+Final frozen policy/result snapshot:
+- Selected lengths per bin: [4, 4, 4, 4, 4, 4]
+- Validation tokens_per_call: 1.6672916138839624
+- Validation rejection_rate: 0.7684148298285618
+- Oracle replay validation tokens_per_call: 2.1168144582383244
+- Oracle replay validation rejection_rate: 0.46502829152943165
+- Recovered fraction: 0.6908512220053898
+- Cluster-bootstrap 95% CI for recovered_fraction: [0.6781169535155199, 0.70651908881049] using 160 run_id resamples
 
 11. Current Evidence-Backed Status Summary
 
@@ -259,10 +264,14 @@ Completed:
 - Pilot corpus generation and pilot analytics
 - Frozen full corpus with locked split
 - H1/H2/H3 analysis results and interpretations
-- Level-controller offline framework + tests
+- Frozen-corpus level-controller evaluation framework
+- Calibration-only fitting and validation-only evaluation on the real corpus
+- Corrected oracle replay under the same candidate set/objective as the causal controller
+- Frozen controller artifact and policy summary with bootstrap uncertainty
 
-Partially complete / pending:
-- Dedicated real-data controller benchmark table (matched compute/wall-clock) remains to be run
+Still deferred to later phase:
+- Matched wall-clock or FLOPs benchmarking in the live EAGLE-3 harness
+- Any test-split evaluation
 
 12. Final Framing
 
@@ -271,4 +280,5 @@ Primary scientific result:
 - Incremental latent-state-over-level gain is not supported on current validation under matched smoothing controls.
 
 Operational result:
-- The project now has full logging, pilot evidence, frozen corpus, validated statistical tests, and an implemented level-controller baseline framework for next-stage benchmarking.
+- The project now has full logging, pilot evidence, a frozen corpus with locked splits, validated statistical tests, and a completed offline level-controller benchmark on the real corpus.
+- The current P3 controller result is a frozen validation benchmark, not a deployed online decode policy and not a hardware-matched speedup claim.
