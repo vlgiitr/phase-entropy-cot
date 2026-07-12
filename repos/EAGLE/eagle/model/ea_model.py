@@ -206,6 +206,7 @@ class EaModel(nn.Module):
             best_candidate,
             accept_length,
             sample_p,
+            draft_stats,
             hidden_state_new,
             retrieve_indices,
             candidates,
@@ -282,6 +283,28 @@ class EaModel(nn.Module):
                         "prob": float(top_prob),
                     })
 
+            # Prefer drafter stats emitted from the draft tree expansion when available.
+            # This keeps legacy fields unchanged while enabling additive p/q backfill.
+            if isinstance(draft_stats, dict):
+                if draft_stats.get("draft_entropy") is not None:
+                    draft_entropy = float(draft_stats.get("draft_entropy"))
+                if draft_stats.get("draft_top1_prob") is not None:
+                    draft_top1_prob = float(draft_stats.get("draft_top1_prob"))
+                if draft_stats.get("draft_topk_probs") is not None:
+                    draft_topk_probs = draft_stats.get("draft_topk_probs")
+
+            target_token_prob = float(target_probs[token_id].item()) if token_id < target_probs.shape[-1] else None
+            draft_token_prob = None
+            if draft_probs is not None and token_id < draft_probs.shape[-1]:
+                draft_token_prob = float(draft_probs[token_id].item())
+            if isinstance(draft_stats, dict):
+                topk_probs = draft_stats.get("draft_topk_probs")
+                if isinstance(topk_probs, list):
+                    for item in topk_probs:
+                        if int(item.get("id", -1)) == token_id:
+                            draft_token_prob = float(item.get("prob"))
+                            break
+
             metadata = {
                 "run_id": None,
                 "problem_id": None,
@@ -304,6 +327,10 @@ class EaModel(nn.Module):
                 "draft_entropy": draft_entropy,
                 "draft_top1_prob": draft_top1_prob,
                 "draft_topk_probs": draft_topk_probs,
+                "p": target_token_prob,
+                "q": draft_token_prob,
+                "target_token_prob": target_token_prob,
+                "draft_token_prob": draft_token_prob,
                 "run_id": metadata.get("run_id"),
                 "problem_id": metadata.get("problem_id"),
                 "model_name": metadata.get("model_name") or self.base_model_name_or_path,
@@ -378,7 +405,7 @@ class EaModel(nn.Module):
         input_len = input_ids.shape[1]
         reset_tree_mode(self)
         # prefill
-        draft_tokens, retrieve_indices, tree_mask, tree_position_ids, logits, hidden_state, sample_token = initialize_tree(
+        draft_tokens, retrieve_indices, tree_mask, tree_position_ids, logits, hidden_state, sample_token, draft_stats = initialize_tree(
             input_ids, self, past_key_values, logits_processor
         )
         new_token = 0
@@ -407,8 +434,10 @@ class EaModel(nn.Module):
             )
             # print(accept_length)
             prev_input_len = input_ids.shape[1]
+            # Position must be relative to prompt end (P1.1), not absolute sequence length.
+            position_from_prompt_end = max(0, prev_input_len - input_len)
             # Adjusting the input sequence, draft model forward
-            input_ids, draft_tokens, retrieve_indices, tree_mask, tree_position_ids, new_token, hidden_state, sample_token = update_inference_inputs(
+            input_ids, draft_tokens, retrieve_indices, tree_mask, tree_position_ids, new_token, hidden_state, sample_token, draft_stats = update_inference_inputs(
                 input_ids,
                 candidates,
                 best_candidate,
@@ -430,10 +459,11 @@ class EaModel(nn.Module):
                     best_candidate,
                     accept_length,
                     sample_p,
+                    draft_stats,
                     hidden_state_new,
                     retrieve_indices,
                     candidates,
-                    prev_input_len,
+                    position_from_prompt_end,
                     logits_processor,
                     log_metadata=log_metadata,
                 )
@@ -577,7 +607,7 @@ class EaModel(nn.Module):
 
         input_len = input_ids.shape[1]
         reset_tree_mode(self)
-        draft_tokens, retrieve_indices, tree_mask, tree_position_ids, logits, hidden_state, sample_token = initialize_tree(
+        draft_tokens, retrieve_indices, tree_mask, tree_position_ids, logits, hidden_state, sample_token, draft_stats = initialize_tree(
             input_ids, self, past_key_values, logits_processor
         )
         new_token = 0
@@ -605,8 +635,10 @@ class EaModel(nn.Module):
             )
             # print(accept_length)
             prev_input_len = input_ids.shape[1]
+            # Position must be relative to prompt end (P1.1), not absolute sequence length.
+            position_from_prompt_end = max(0, prev_input_len - input_len)
             # with Timer("update_inference_inputs"):
-            input_ids, draft_tokens, retrieve_indices, tree_mask, tree_position_ids, new_token, hidden_state, sample_token = update_inference_inputs(
+            input_ids, draft_tokens, retrieve_indices, tree_mask, tree_position_ids, new_token, hidden_state, sample_token, draft_stats = update_inference_inputs(
                 input_ids,
                 candidates,
                 best_candidate,
@@ -628,10 +660,11 @@ class EaModel(nn.Module):
                     best_candidate,
                     accept_length,
                     sample_p,
+                    draft_stats,
                     hidden_state_new,
                     retrieve_indices,
                     candidates,
-                    prev_input_len,
+                    position_from_prompt_end,
                     logits_processor,
                 )
 

@@ -1,0 +1,13 @@
+{
+  "status": "ok",
+  "processed_traces": 1,
+  "total_traces_target": 1,
+  "scored_rows": 663,
+  "p_min": 5.6688187477504925e-09,
+  "p_max": 0.9535457491874695,
+  "q_min": 5.355321874844776e-08,
+  "q_max": 0.48773378133773804,
+  "pq_in_unit_interval": true,
+  "filter_only_trace_name": "trace_livecodebench_108.jsonl",
+  "backfill_dir": "/root/phase-entropy-cot/corpus/v1/backfill_pq"
+}
