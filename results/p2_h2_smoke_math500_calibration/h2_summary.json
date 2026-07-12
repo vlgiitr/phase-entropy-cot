@@ -1,0 +1,70 @@
+{
+  "input": "corpus/v1/model=llama8b/drafter=EAGLE-3/dataset=math500/temperature=0/split=calibration/e39dc378d60b4bc6bf842dc865fc1b02-0.parquet",
+  "rows_after_filters": 2560,
+  "run_ids": [
+    "math500_1",
+    "math500_10",
+    "math500_101"
+  ],
+  "datasets": [
+    "math500"
+  ],
+  "cell_A_draft_within": {
+    "k": 3,
+    "rho": -0.08009161792441777,
+    "ci_low": -0.18209278282702027,
+    "ci_high": 0.023614935052583507,
+    "tau2": 0.0072404500866651645,
+    "bootstrap_ci_low": -0.18396965743191487,
+    "bootstrap_ci_high": -0.018188337708266146,
+    "n_total": 2560
+  },
+  "cell_B_draft_across": {
+    "cell": "B_draft_across",
+    "available": false,
+    "reason": "need_at_least_two_domains",
+    "n_domains": 1,
+    "domain_means": [
+      {
+        "dataset": "math500",
+        "entropy_mean": 5.404689192856926,
+        "acceptance_mean": 0.62109375,
+        "n": 2560
+      }
+    ]
+  },
+  "cell_C_target_within": {
+    "k": 3,
+    "rho": -0.011659922944747686,
+    "ci_low": -0.09768184255149695,
+    "ci_high": 0.07453492858853783,
+    "tau2": 0.004634449093031513,
+    "bootstrap_ci_low": -0.08804985413236703,
+    "bootstrap_ci_high": 0.06422714301984517,
+    "n_total": 2560
+  },
+  "cell_D_target_across": {
+    "cell": "D_target_across",
+    "available": false,
+    "reason": "need_at_least_two_domains",
+    "n_domains": 1,
+    "domain_means": [
+      {
+        "dataset": "math500",
+        "entropy_mean": 0.6749001684399544,
+        "acceptance_mean": 0.62109375,
+        "n": 2560
+      }
+    ]
+  },
+  "pairwise_tests": {
+    "A_vs_C_fisher_z_diff": {
+      "z": -2.4529799333637112,
+      "p": 0.01416782418939766
+    },
+    "B_vs_D_fisher_z_diff": {
+      "z": NaN,
+      "p": NaN
+    }
+  }
+}

@@ -1,0 +1,7 @@
+cell,run_id,dataset,n,rho,p_value
+A2_draft_conf_within_spearman,livecodebench_0,livecodebench,631,0.4051337850575027,2.5321341186592404e-26
+A2_draft_conf_within_spearman,livecodebench_101,livecodebench,674,0.45316476476088935,1.9362099754260058e-35
+A2_draft_conf_within_spearman,livecodebench_104,livecodebench,640,0.4268380398190567,1.0048521507412858e-29
+A2_draft_conf_within_spearman,math500_1,math500,852,0.5392458770836979,1.9248811006397295e-65
+A2_draft_conf_within_spearman,math500_10,math500,962,0.31025467009458385,6.549162891860343e-23
+A2_draft_conf_within_spearman,math500_101,math500,746,0.4073987904933673,3.4037768996338917e-31

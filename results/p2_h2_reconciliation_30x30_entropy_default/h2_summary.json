@@ -1,0 +1,1032 @@
+{
+  "input_corpus_path": "/root/phase-entropy-cot/corpus/v1",
+  "analysis_mode": "h2_reconciliation_partial",
+  "method": "spearman",
+  "split": "calibration",
+  "draft_metric": "draft_entropy",
+  "token_metric": "target_entropy",
+  "rows_after_filters": 41583,
+  "run_ids": [
+    "livecodebench_0",
+    "livecodebench_104",
+    "livecodebench_114",
+    "livecodebench_117",
+    "livecodebench_12",
+    "livecodebench_126",
+    "livecodebench_127",
+    "livecodebench_13",
+    "livecodebench_132",
+    "livecodebench_133",
+    "livecodebench_143",
+    "livecodebench_26",
+    "livecodebench_27",
+    "livecodebench_28",
+    "livecodebench_30",
+    "livecodebench_34",
+    "livecodebench_36",
+    "livecodebench_39",
+    "livecodebench_44",
+    "livecodebench_55",
+    "livecodebench_56",
+    "livecodebench_6",
+    "livecodebench_60",
+    "livecodebench_63",
+    "livecodebench_64",
+    "livecodebench_76",
+    "livecodebench_81",
+    "livecodebench_93",
+    "livecodebench_95",
+    "livecodebench_96",
+    "math500_1",
+    "math500_108",
+    "math500_125",
+    "math500_126",
+    "math500_128",
+    "math500_130",
+    "math500_131",
+    "math500_132",
+    "math500_141",
+    "math500_150",
+    "math500_154",
+    "math500_163",
+    "math500_172",
+    "math500_184",
+    "math500_194",
+    "math500_198",
+    "math500_21",
+    "math500_24",
+    "math500_4",
+    "math500_42",
+    "math500_44",
+    "math500_46",
+    "math500_5",
+    "math500_59",
+    "math500_64",
+    "math500_73",
+    "math500_78",
+    "math500_84",
+    "math500_92",
+    "math500_96"
+  ],
+  "datasets": [
+    "livecodebench",
+    "math500"
+  ],
+  "traces_per_dataset": 30,
+  "cell_A_draft_within": {
+    "k": 60,
+    "rho": -0.13613028243497005,
+    "ci_low": -0.15797998109216962,
+    "ci_high": -0.11414734225574573,
+    "tau2": 0.006282418775562357,
+    "n_total": 41583,
+    "bootstrap_ci_low": -0.15830883977328106,
+    "bootstrap_ci_high": -0.11404509219830528
+  },
+  "cell_B_draft_across_trace": {
+    "available": true,
+    "method": "trace_level_spearman",
+    "rho": -0.20747718086443595,
+    "p": 0.11168459865482885,
+    "bootstrap_ci": [
+      -0.4561711783929392,
+      0.052669281160646605
+    ],
+    "n_traces": 60,
+    "trace_means": [
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_0",
+        "metric_mean": 4.971285772661527,
+        "acceptance_mean": 0.7131537242472267,
+        "n": 631
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_104",
+        "metric_mean": 5.33356771908002,
+        "acceptance_mean": 0.5875,
+        "n": 640
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_114",
+        "metric_mean": 4.912015336507836,
+        "acceptance_mean": 0.6751592356687898,
+        "n": 628
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_117",
+        "metric_mean": 5.691406606303788,
+        "acceptance_mean": 0.5669957686882934,
+        "n": 709
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_12",
+        "metric_mean": 6.153464417290184,
+        "acceptance_mean": 0.6350649350649351,
+        "n": 770
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_126",
+        "metric_mean": 4.8761678106493695,
+        "acceptance_mean": 0.6445672191528545,
+        "n": 543
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_127",
+        "metric_mean": 5.506974220286432,
+        "acceptance_mean": 0.6458923512747875,
+        "n": 706
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_13",
+        "metric_mean": 6.175381445056149,
+        "acceptance_mean": 0.6537931034482759,
+        "n": 725
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_132",
+        "metric_mean": 5.8071426198491105,
+        "acceptance_mean": 0.693069306930693,
+        "n": 707
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_133",
+        "metric_mean": 5.487938390131394,
+        "acceptance_mean": 0.7285491419656787,
+        "n": 641
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_143",
+        "metric_mean": 5.583167078170857,
+        "acceptance_mean": 0.7504587155963303,
+        "n": 545
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_26",
+        "metric_mean": 5.242851858741679,
+        "acceptance_mean": 0.75,
+        "n": 644
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_27",
+        "metric_mean": 5.70463343641537,
+        "acceptance_mean": 0.6938775510204082,
+        "n": 735
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_28",
+        "metric_mean": 3.5360852281651747,
+        "acceptance_mean": 0.7186081694402421,
+        "n": 661
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_30",
+        "metric_mean": 5.331242309237674,
+        "acceptance_mean": 0.5490683229813664,
+        "n": 805
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_34",
+        "metric_mean": 5.7058420188798396,
+        "acceptance_mean": 0.6781609195402298,
+        "n": 609
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_36",
+        "metric_mean": 5.58691243689461,
+        "acceptance_mean": 0.700354609929078,
+        "n": 564
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_39",
+        "metric_mean": 6.489194659392451,
+        "acceptance_mean": 0.6112956810631229,
+        "n": 602
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_44",
+        "metric_mean": 4.20582730429995,
+        "acceptance_mean": 0.694488188976378,
+        "n": 635
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_55",
+        "metric_mean": 6.732584740112846,
+        "acceptance_mean": 0.5979073243647235,
+        "n": 669
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_56",
+        "metric_mean": 6.809055423718715,
+        "acceptance_mean": 0.6138482023968043,
+        "n": 751
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_6",
+        "metric_mean": 7.107784662026304,
+        "acceptance_mean": 0.6653543307086615,
+        "n": 508
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_60",
+        "metric_mean": 5.88795048642172,
+        "acceptance_mean": 0.5762273901808785,
+        "n": 774
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_63",
+        "metric_mean": 5.942474698547291,
+        "acceptance_mean": 0.6635367762128326,
+        "n": 639
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_64",
+        "metric_mean": 6.226294836768796,
+        "acceptance_mean": 0.6529745042492918,
+        "n": 706
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_76",
+        "metric_mean": 5.134298609622695,
+        "acceptance_mean": 0.7598343685300207,
+        "n": 483
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_81",
+        "metric_mean": 5.3263626373766835,
+        "acceptance_mean": 0.6931137724550899,
+        "n": 668
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_93",
+        "metric_mean": 5.385719414987204,
+        "acceptance_mean": 0.5487106017191977,
+        "n": 698
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_95",
+        "metric_mean": 6.257405656103438,
+        "acceptance_mean": 0.586924219910847,
+        "n": 673
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_96",
+        "metric_mean": 4.812316571639795,
+        "acceptance_mean": 0.7337559429477021,
+        "n": 631
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_1",
+        "metric_mean": 7.502379350179815,
+        "acceptance_mean": 0.6326291079812206,
+        "n": 852
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_108",
+        "metric_mean": 4.249536643428313,
+        "acceptance_mean": 0.6497524752475248,
+        "n": 808
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_125",
+        "metric_mean": 5.561839538821126,
+        "acceptance_mean": 0.6541554959785523,
+        "n": 373
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_126",
+        "metric_mean": 6.37293560625341,
+        "acceptance_mean": 0.5513733468972533,
+        "n": 983
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_128",
+        "metric_mean": 6.000075314946004,
+        "acceptance_mean": 0.7204574332909784,
+        "n": 787
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_130",
+        "metric_mean": 3.9431822810578625,
+        "acceptance_mean": 0.5993690851735016,
+        "n": 951
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_131",
+        "metric_mean": 2.727942526291965,
+        "acceptance_mean": 0.7672530446549392,
+        "n": 739
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_132",
+        "metric_mean": 6.404092186467503,
+        "acceptance_mean": 0.8029411764705883,
+        "n": 340
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_141",
+        "metric_mean": 6.165358327867926,
+        "acceptance_mean": 0.7440559440559441,
+        "n": 715
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_150",
+        "metric_mean": 4.5736493336726305,
+        "acceptance_mean": 0.6587078651685393,
+        "n": 712
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_154",
+        "metric_mean": 5.049702785752204,
+        "acceptance_mean": 0.7108603667136812,
+        "n": 709
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_163",
+        "metric_mean": 3.52570877060537,
+        "acceptance_mean": 0.6272401433691757,
+        "n": 837
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_172",
+        "metric_mean": 2.8175177199673787,
+        "acceptance_mean": 0.6813417190775681,
+        "n": 477
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_184",
+        "metric_mean": 4.714975313211745,
+        "acceptance_mean": 0.5595628415300546,
+        "n": 915
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_194",
+        "metric_mean": 5.137025964368328,
+        "acceptance_mean": 0.6568627450980392,
+        "n": 816
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_198",
+        "metric_mean": 4.120679333120686,
+        "acceptance_mean": 0.5316027088036117,
+        "n": 886
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_21",
+        "metric_mean": 4.414982318324491,
+        "acceptance_mean": 0.6829268292682927,
+        "n": 820
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_24",
+        "metric_mean": 5.729451598783032,
+        "acceptance_mean": 0.6488946684005201,
+        "n": 769
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_4",
+        "metric_mean": 5.126315949377476,
+        "acceptance_mean": 0.6908212560386473,
+        "n": 621
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_42",
+        "metric_mean": 4.265986504327624,
+        "acceptance_mean": 0.75,
+        "n": 672
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_44",
+        "metric_mean": 6.706233158161383,
+        "acceptance_mean": 0.6674157303370787,
+        "n": 445
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_46",
+        "metric_mean": 4.899913965947116,
+        "acceptance_mean": 0.6076086956521739,
+        "n": 920
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_5",
+        "metric_mean": 5.091176729992572,
+        "acceptance_mean": 0.6525679758308157,
+        "n": 331
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_59",
+        "metric_mean": 4.415545286513638,
+        "acceptance_mean": 0.6592865928659286,
+        "n": 813
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_64",
+        "metric_mean": 4.569541129752766,
+        "acceptance_mean": 0.5879828326180258,
+        "n": 932
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_73",
+        "metric_mean": 3.8235910871715286,
+        "acceptance_mean": 0.784,
+        "n": 625
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_78",
+        "metric_mean": 4.140577168003797,
+        "acceptance_mean": 0.6938239159001314,
+        "n": 761
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_84",
+        "metric_mean": 3.943439996875513,
+        "acceptance_mean": 0.7181688125894135,
+        "n": 699
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_92",
+        "metric_mean": 6.656421734897041,
+        "acceptance_mean": 0.6574307304785895,
+        "n": 794
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_96",
+        "metric_mean": 4.679171712195072,
+        "acceptance_mean": 0.6722151088348272,
+        "n": 781
+      }
+    ]
+  },
+  "cell_B_draft_across_domain": {
+    "available": true,
+    "n_domains": 2,
+    "domain_means": [
+      {
+        "dataset": "livecodebench",
+        "metric_mean": 5.609776066579108,
+        "acceptance_mean": 0.6555837563451776,
+        "n": 19700,
+        "traces": 30
+      },
+      {
+        "dataset": "math500",
+        "metric_mean": 4.883529017374922,
+        "acceptance_mean": 0.658776218982772,
+        "n": 21883,
+        "traces": 30
+      }
+    ],
+    "method": "two_domain_delta",
+    "metric_delta": -0.7262470492041855,
+    "acceptance_delta": 0.0031924626375944287,
+    "acceptance_delta_bootstrap_ci": [
+      -0.029104573912287025,
+      0.036649713408335685
+    ]
+  },
+  "cell_C_token_within": {
+    "k": 60,
+    "rho": -0.002693484267232781,
+    "ci_low": -0.01361956326723173,
+    "ci_high": 0.00823323786729245,
+    "tau2": 0.00040216432623646703,
+    "n_total": 41583,
+    "bootstrap_ci_low": -0.012814167751153524,
+    "bootstrap_ci_high": 0.00784608305591785
+  },
+  "cell_D_token_across_trace": {
+    "available": true,
+    "method": "trace_level_spearman",
+    "rho": -0.1336500924009558,
+    "p": 0.30865520699284904,
+    "bootstrap_ci": [
+      -0.3970746584850912,
+      0.1426648827790137
+    ],
+    "n_traces": 60,
+    "trace_means": [
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_0",
+        "metric_mean": 1.3073147982857498,
+        "acceptance_mean": 0.7131537242472267,
+        "n": 631
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_104",
+        "metric_mean": 1.4458229915931327,
+        "acceptance_mean": 0.5875,
+        "n": 640
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_114",
+        "metric_mean": 1.3843586324330468,
+        "acceptance_mean": 0.6751592356687898,
+        "n": 628
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_117",
+        "metric_mean": 1.10270189464302,
+        "acceptance_mean": 0.5669957686882934,
+        "n": 709
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_12",
+        "metric_mean": 1.0691875906639798,
+        "acceptance_mean": 0.6350649350649351,
+        "n": 770
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_126",
+        "metric_mean": 1.4625465844959458,
+        "acceptance_mean": 0.6445672191528545,
+        "n": 543
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_127",
+        "metric_mean": 1.3411510175373174,
+        "acceptance_mean": 0.6458923512747875,
+        "n": 706
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_13",
+        "metric_mean": 1.074192527630337,
+        "acceptance_mean": 0.6537931034482759,
+        "n": 725
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_132",
+        "metric_mean": 1.0125691634079763,
+        "acceptance_mean": 0.693069306930693,
+        "n": 707
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_133",
+        "metric_mean": 0.8644229314894006,
+        "acceptance_mean": 0.7285491419656787,
+        "n": 641
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_143",
+        "metric_mean": 1.1708960587196615,
+        "acceptance_mean": 0.7504587155963303,
+        "n": 545
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_26",
+        "metric_mean": 1.3594022934307108,
+        "acceptance_mean": 0.75,
+        "n": 644
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_27",
+        "metric_mean": 1.3156135862251908,
+        "acceptance_mean": 0.6938775510204082,
+        "n": 735
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_28",
+        "metric_mean": 1.0807798627200158,
+        "acceptance_mean": 0.7186081694402421,
+        "n": 661
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_30",
+        "metric_mean": 1.558860862884835,
+        "acceptance_mean": 0.5490683229813664,
+        "n": 805
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_34",
+        "metric_mean": 1.5207810035793423,
+        "acceptance_mean": 0.6781609195402298,
+        "n": 609
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_36",
+        "metric_mean": 0.9313528909296988,
+        "acceptance_mean": 0.700354609929078,
+        "n": 564
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_39",
+        "metric_mean": 0.955488185575402,
+        "acceptance_mean": 0.6112956810631229,
+        "n": 602
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_44",
+        "metric_mean": 1.323379899933897,
+        "acceptance_mean": 0.694488188976378,
+        "n": 635
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_55",
+        "metric_mean": 1.188512000041015,
+        "acceptance_mean": 0.5979073243647235,
+        "n": 669
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_56",
+        "metric_mean": 0.9833417498408009,
+        "acceptance_mean": 0.6138482023968043,
+        "n": 751
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_6",
+        "metric_mean": 1.1246323398901994,
+        "acceptance_mean": 0.6653543307086615,
+        "n": 508
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_60",
+        "metric_mean": 1.4925207985639106,
+        "acceptance_mean": 0.5762273901808785,
+        "n": 774
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_63",
+        "metric_mean": 1.0323412646220318,
+        "acceptance_mean": 0.6635367762128326,
+        "n": 639
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_64",
+        "metric_mean": 1.0823096659948475,
+        "acceptance_mean": 0.6529745042492918,
+        "n": 706
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_76",
+        "metric_mean": 0.9306214196805004,
+        "acceptance_mean": 0.7598343685300207,
+        "n": 483
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_81",
+        "metric_mean": 1.3720729495749482,
+        "acceptance_mean": 0.6931137724550899,
+        "n": 668
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_93",
+        "metric_mean": 1.4720496160968422,
+        "acceptance_mean": 0.5487106017191977,
+        "n": 698
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_95",
+        "metric_mean": 1.3619066757611786,
+        "acceptance_mean": 0.586924219910847,
+        "n": 673
+      },
+      {
+        "dataset": "livecodebench",
+        "run_id": "livecodebench_96",
+        "metric_mean": 1.4731762405915168,
+        "acceptance_mean": 0.7337559429477021,
+        "n": 631
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_1",
+        "metric_mean": 0.5282579878667304,
+        "acceptance_mean": 0.6326291079812206,
+        "n": 852
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_108",
+        "metric_mean": 0.4582496013338646,
+        "acceptance_mean": 0.6497524752475248,
+        "n": 808
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_125",
+        "metric_mean": 0.6416285604448746,
+        "acceptance_mean": 0.6541554959785523,
+        "n": 373
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_126",
+        "metric_mean": 0.4983122411996253,
+        "acceptance_mean": 0.5513733468972533,
+        "n": 983
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_128",
+        "metric_mean": 0.8006498827724033,
+        "acceptance_mean": 0.7204574332909784,
+        "n": 787
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_130",
+        "metric_mean": 0.5981508295847326,
+        "acceptance_mean": 0.5993690851735016,
+        "n": 951
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_131",
+        "metric_mean": 0.34760087190379213,
+        "acceptance_mean": 0.7672530446549392,
+        "n": 739
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_132",
+        "metric_mean": 0.5522305830535376,
+        "acceptance_mean": 0.8029411764705883,
+        "n": 340
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_141",
+        "metric_mean": 0.9416358603443828,
+        "acceptance_mean": 0.7440559440559441,
+        "n": 715
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_150",
+        "metric_mean": 0.5591719198335762,
+        "acceptance_mean": 0.6587078651685393,
+        "n": 712
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_154",
+        "metric_mean": 0.9041348014276128,
+        "acceptance_mean": 0.7108603667136812,
+        "n": 709
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_163",
+        "metric_mean": 0.6289440862803743,
+        "acceptance_mean": 0.6272401433691757,
+        "n": 837
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_172",
+        "metric_mean": 0.455063150753406,
+        "acceptance_mean": 0.6813417190775681,
+        "n": 477
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_184",
+        "metric_mean": 0.44218138970927573,
+        "acceptance_mean": 0.5595628415300546,
+        "n": 915
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_194",
+        "metric_mean": 0.46617076075397146,
+        "acceptance_mean": 0.6568627450980392,
+        "n": 816
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_198",
+        "metric_mean": 0.8074293782213673,
+        "acceptance_mean": 0.5316027088036117,
+        "n": 886
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_21",
+        "metric_mean": 0.5590730807145191,
+        "acceptance_mean": 0.6829268292682927,
+        "n": 820
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_24",
+        "metric_mean": 0.636849115029934,
+        "acceptance_mean": 0.6488946684005201,
+        "n": 769
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_4",
+        "metric_mean": 0.659550078366088,
+        "acceptance_mean": 0.6908212560386473,
+        "n": 621
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_42",
+        "metric_mean": 0.4328689594710399,
+        "acceptance_mean": 0.75,
+        "n": 672
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_44",
+        "metric_mean": 0.485109718621374,
+        "acceptance_mean": 0.6674157303370787,
+        "n": 445
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_46",
+        "metric_mean": 0.34979367826038105,
+        "acceptance_mean": 0.6076086956521739,
+        "n": 920
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_5",
+        "metric_mean": 0.6491127046957489,
+        "acceptance_mean": 0.6525679758308157,
+        "n": 331
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_59",
+        "metric_mean": 0.44763157515646773,
+        "acceptance_mean": 0.6592865928659286,
+        "n": 813
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_64",
+        "metric_mean": 0.6837124960579133,
+        "acceptance_mean": 0.5879828326180258,
+        "n": 932
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_73",
+        "metric_mean": 0.4575436758440239,
+        "acceptance_mean": 0.784,
+        "n": 625
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_78",
+        "metric_mean": 0.36404593581171285,
+        "acceptance_mean": 0.6938239159001314,
+        "n": 761
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_84",
+        "metric_mean": 0.4808461157699932,
+        "acceptance_mean": 0.7181688125894135,
+        "n": 699
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_92",
+        "metric_mean": 0.6098656579594894,
+        "acceptance_mean": 0.6574307304785895,
+        "n": 794
+      },
+      {
+        "dataset": "math500",
+        "run_id": "math500_96",
+        "metric_mean": 0.7127728256653024,
+        "acceptance_mean": 0.6722151088348272,
+        "n": 781
+      }
+    ]
+  },
+  "cell_D_token_across_domain": {
+    "available": true,
+    "n_domains": 2,
+    "domain_means": [
+      {
+        "dataset": "livecodebench",
+        "metric_mean": 1.231213246190254,
+        "acceptance_mean": 0.6555837563451776,
+        "n": 19700,
+        "traces": 30
+      },
+      {
+        "dataset": "math500",
+        "metric_mean": 0.5708426294197327,
+        "acceptance_mean": 0.658776218982772,
+        "n": 21883,
+        "traces": 30
+      }
+    ],
+    "method": "two_domain_delta",
+    "metric_delta": -0.6603706167705213,
+    "acceptance_delta": 0.0031924626375944287,
+    "acceptance_delta_bootstrap_ci": [
+      -0.029503595293623314,
+      0.034565242409774335
+    ]
+  },
+  "supplemental_A_raw_draft_entropy_within": {
+    "k": 60,
+    "rho": -0.13613028243497005,
+    "ci_low": -0.15797998109216962,
+    "ci_high": -0.11414734225574573,
+    "tau2": 0.006282418775562357,
+    "n_total": 41583,
+    "bootstrap_ci_low": -0.157586468094006,
+    "bootstrap_ci_high": -0.11653380176559248
+  },
+  "pairwise_tests": {
+    "A_vs_C_fisher_z_diff": {
+      "z": -19.362514146242553,
+      "p": 0.0
+    }
+  }
+}

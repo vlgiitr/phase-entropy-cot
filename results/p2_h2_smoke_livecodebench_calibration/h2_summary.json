@@ -1,0 +1,70 @@
+{
+  "input": "corpus/v1/model=llama8b/drafter=EAGLE-3/dataset=livecodebench/temperature=0/split=calibration/e39dc378d60b4bc6bf842dc865fc1b02-0.parquet",
+  "rows_after_filters": 1945,
+  "run_ids": [
+    "livecodebench_0",
+    "livecodebench_101",
+    "livecodebench_104"
+  ],
+  "datasets": [
+    "unknown"
+  ],
+  "cell_A_draft_within": {
+    "k": 3,
+    "rho": -0.11988906975179373,
+    "ci_low": -0.20978740901194895,
+    "ci_high": -0.02798069407779907,
+    "tau2": 0.005128411536172777,
+    "bootstrap_ci_low": -0.20382719918572983,
+    "bootstrap_ci_high": -0.04549339160409555,
+    "n_total": 1945
+  },
+  "cell_B_draft_across": {
+    "cell": "B_draft_across",
+    "available": false,
+    "reason": "need_at_least_two_domains",
+    "n_domains": 1,
+    "domain_means": [
+      {
+        "dataset": "unknown",
+        "entropy_mean": 5.3486067507299895,
+        "acceptance_mean": 0.6123393316195372,
+        "n": 1945
+      }
+    ]
+  },
+  "cell_C_target_within": {
+    "k": 3,
+    "rho": -0.0010692907591802769,
+    "ci_low": -0.06661689029134776,
+    "ci_high": 0.06448749846110718,
+    "tau2": 0.001815086936567175,
+    "bootstrap_ci_low": -0.06719205624693866,
+    "bootstrap_ci_high": 0.04170636741040827,
+    "n_total": 1945
+  },
+  "cell_D_target_across": {
+    "cell": "D_target_across",
+    "available": false,
+    "reason": "need_at_least_two_domains",
+    "n_domains": 1,
+    "domain_means": [
+      {
+        "dataset": "unknown",
+        "entropy_mean": 1.2540841939512146,
+        "acceptance_mean": 0.6123393316195372,
+        "n": 1945
+      }
+    ]
+  },
+  "pairwise_tests": {
+    "A_vs_C_fisher_z_diff": {
+      "z": -3.7205829149556773,
+      "p": 0.00019876346988878524
+    },
+    "B_vs_D_fisher_z_diff": {
+      "z": NaN,
+      "p": NaN
+    }
+  }
+}

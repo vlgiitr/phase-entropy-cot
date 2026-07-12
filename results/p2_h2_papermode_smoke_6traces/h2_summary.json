@@ -1,0 +1,186 @@
+{
+  "input": [
+    "corpus/v1/model=llama8b/drafter=EAGLE-3/dataset=math500/temperature=0/split=calibration/e39dc378d60b4bc6bf842dc865fc1b02-0.parquet",
+    "corpus/v1/model=llama8b/drafter=EAGLE-3/dataset=livecodebench/temperature=0/split=calibration/e39dc378d60b4bc6bf842dc865fc1b02-0.parquet"
+  ],
+  "analysis_mode": "paper_step_spearman",
+  "alpha_source_used": "accepted_indicator",
+  "gamma_for_step": 4.0,
+  "rows_after_filters": 4505,
+  "run_ids": [
+    "livecodebench_0",
+    "livecodebench_101",
+    "livecodebench_104",
+    "math500_1",
+    "math500_10",
+    "math500_101"
+  ],
+  "datasets": [
+    "livecodebench",
+    "math500"
+  ],
+  "cell_A_draft_within": {
+    "k": 6,
+    "rho": -0.43566574775672645,
+    "ci_low": -0.49617140758148687,
+    "ci_high": -0.370948875143514,
+    "tau2": 0.007978170582512973,
+    "bootstrap_ci_low": -0.48973390773876246,
+    "bootstrap_ci_high": -0.3726840894500636,
+    "n_total": 4505
+  },
+  "cell_B_draft_across": {
+    "cell": "B_draft_across_spearman",
+    "available": true,
+    "n_domains": 2,
+    "method": "two_domain_delta",
+    "note": "Spearman across exactly two domain means is degenerate (always |rho|=1); reporting signed deltas instead.",
+    "entropy_delta": 0.056082442126936805,
+    "acceptance_delta": 0.01813544344473006,
+    "acceptance_delta_bootstrap_ci": [
+      -0.04737408823507095,
+      0.08314288255119145
+    ],
+    "domain_means": [
+      {
+        "dataset": "livecodebench",
+        "entropy_mean": 5.3486067507299895,
+        "acceptance_mean": 0.2928020565552699,
+        "n": 1945
+      },
+      {
+        "dataset": "math500",
+        "entropy_mean": 5.404689192856926,
+        "acceptance_mean": 0.3109375,
+        "n": 2560
+      }
+    ]
+  },
+  "cell_C_target_within": {
+    "k": 6,
+    "rho": -0.028722608727048557,
+    "ci_low": -0.08537502323005373,
+    "ci_high": 0.02811493117584234,
+    "tau2": 0.003686780730699119,
+    "bootstrap_ci_low": -0.07598422014319597,
+    "bootstrap_ci_high": 0.023304073495101604,
+    "n_total": 4505
+  },
+  "cell_D_target_across": {
+    "cell": "D_target_across_spearman",
+    "available": true,
+    "n_domains": 2,
+    "method": "two_domain_delta",
+    "note": "Spearman across exactly two domain means is degenerate (always |rho|=1); reporting signed deltas instead.",
+    "entropy_delta": -0.5791840255112602,
+    "acceptance_delta": 0.008754418380462758,
+    "acceptance_delta_bootstrap_ci": [
+      -0.07167998413812529,
+      0.08204889779369251
+    ],
+    "domain_means": [
+      {
+        "dataset": "livecodebench",
+        "entropy_mean": 1.2540841939512146,
+        "acceptance_mean": 0.6123393316195372,
+        "n": 1945
+      },
+      {
+        "dataset": "math500",
+        "entropy_mean": 0.6749001684399544,
+        "acceptance_mean": 0.62109375,
+        "n": 2560
+      }
+    ]
+  },
+  "cell_A2_draft_conf_within": {
+    "k": 6,
+    "rho": 0.4259091059102193,
+    "ci_low": 0.35799202259830065,
+    "ci_high": 0.4893431181037478,
+    "tau2": 0.008707184758259746,
+    "bootstrap_ci_low": 0.3638084462060314,
+    "bootstrap_ci_high": 0.4801857936258943,
+    "n_total": 4505
+  },
+  "cell_B2_draft_conf_across": {
+    "cell": "B2_draft_conf_across_spearman",
+    "available": true,
+    "n_domains": 2,
+    "method": "two_domain_delta",
+    "note": "Spearman across exactly two domain means is degenerate (always |rho|=1); reporting signed deltas instead.",
+    "entropy_delta": 0.01249431671726653,
+    "acceptance_delta": 0.01813544344473006,
+    "acceptance_delta_bootstrap_ci": [
+      -0.04737408823507095,
+      0.08314288255119145
+    ],
+    "domain_means": [
+      {
+        "dataset": "livecodebench",
+        "entropy_mean": 0.40467429566783664,
+        "acceptance_mean": 0.2928020565552699,
+        "n": 1945
+      },
+      {
+        "dataset": "math500",
+        "entropy_mean": 0.41716861238510317,
+        "acceptance_mean": 0.3109375,
+        "n": 2560
+      }
+    ]
+  },
+  "pairwise_tests": {
+    "A_vs_C_fisher_z_diff": {
+      "z": -20.787333039746265,
+      "p": 0.0
+    },
+    "B_vs_D_fisher_z_diff": {
+      "z": NaN,
+      "p": NaN,
+      "reason": "not_applicable_for_two_domain_delta"
+    }
+  },
+  "sign_diagnostics": {
+    "draft_vs_step_acceptance_rate_main": {
+      "n": 4505,
+      "rho": -0.4017672250805981,
+      "p": 2.1614471433715674e-174
+    },
+    "draft_vs_step_acceptance_rate_gamma_fixed": {
+      "n": 4505,
+      "rho": -0.4017672250805981,
+      "p": 2.1614471433715674e-174
+    },
+    "draft_vs_step_acceptance_rate_depth_inferred": {
+      "n": 4505,
+      "rho": -0.3229959885533806,
+      "p": 6.766278527551743e-110
+    },
+    "draft_conf_mean_vs_step_acceptance_rate": {
+      "n": 4505,
+      "rho": 0.4113543298009393,
+      "p": 1.5568365559743831e-183
+    },
+    "draft_conf_min_vs_step_acceptance_rate": {
+      "n": 4505,
+      "rho": 0.4113543298009393,
+      "p": 1.5568365559743831e-183
+    },
+    "draft_vs_accepted_indicator": {
+      "n": 4505,
+      "rho": -0.3398766318605097,
+      "p": 3.276898519368167e-122
+    },
+    "target_vs_accepted_indicator": {
+      "n": 4505,
+      "rho": -0.02508250351718816,
+      "p": 0.09231362060129351
+    },
+    "target_vs_rejected_indicator": {
+      "n": 4505,
+      "rho": 0.02508250351718816,
+      "p": 0.09231362060129351
+    }
+  }
+}

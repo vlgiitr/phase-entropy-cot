@@ -1,0 +1,101 @@
+{
+  "input": [
+    "corpus/v1/model=llama8b/drafter=EAGLE-3/dataset=math500/temperature=0/split=calibration/e39dc378d60b4bc6bf842dc865fc1b02-0.parquet",
+    "corpus/v1/model=llama8b/drafter=EAGLE-3/dataset=livecodebench/temperature=0/split=calibration/e39dc378d60b4bc6bf842dc865fc1b02-0.parquet"
+  ],
+  "rows_after_filters": 2445,
+  "run_ids": [
+    "livecodebench_0",
+    "math500_1",
+    "math500_10"
+  ],
+  "datasets": [
+    "livecodebench",
+    "math500"
+  ],
+  "cell_A_draft_within": {
+    "k": 3,
+    "rho": -0.08942189963877643,
+    "ci_low": -0.18506195246714485,
+    "ci_high": 0.007896160449107702,
+    "tau2": 0.006168698523533614,
+    "bootstrap_ci_low": -0.18396965743191487,
+    "bootstrap_ci_high": -0.03600321912939075,
+    "n_total": 2445
+  },
+  "cell_B_draft_across": {
+    "cell": "B_draft_across",
+    "available": true,
+    "n_domains": 2,
+    "method": "two_domain_delta",
+    "note": "Pearson across exactly two domain means is degenerate (always |rho|=1); reporting signed deltas instead.",
+    "entropy_delta": 0.6101834899380982,
+    "acceptance_delta": -0.10455394475439317,
+    "acceptance_delta_bootstrap_ci": [
+      -0.12583563692913935,
+      -0.08052461626600604
+    ],
+    "domain_means": [
+      {
+        "dataset": "livecodebench",
+        "entropy_mean": 4.971285772661527,
+        "acceptance_mean": 0.7131537242472267,
+        "n": 631
+      },
+      {
+        "dataset": "math500",
+        "entropy_mean": 5.581469262599625,
+        "acceptance_mean": 0.6085997794928335,
+        "n": 1814
+      }
+    ]
+  },
+  "cell_C_target_within": {
+    "k": 3,
+    "rho": 0.02495309771254259,
+    "ci_low": -0.022661053547301985,
+    "ci_high": 0.0724543043253552,
+    "tau2": 0.0005286412910984464,
+    "bootstrap_ci_low": -0.014978345344684056,
+    "bootstrap_ci_high": 0.06422714301984517,
+    "n_total": 2445
+  },
+  "cell_D_target_across": {
+    "cell": "D_target_across",
+    "available": true,
+    "n_domains": 2,
+    "method": "two_domain_delta",
+    "note": "Pearson across exactly two domain means is degenerate (always |rho|=1); reporting signed deltas instead.",
+    "entropy_delta": -0.599608413900864,
+    "acceptance_delta": -0.10455394475439317,
+    "acceptance_delta_bootstrap_ci": [
+      -0.12583563692913935,
+      -0.08052461626600604
+    ],
+    "domain_means": [
+      {
+        "dataset": "livecodebench",
+        "entropy_mean": 1.3073147982857498,
+        "acceptance_mean": 0.7131537242472267,
+        "n": 631
+      },
+      {
+        "dataset": "math500",
+        "entropy_mean": 0.7077063843848859,
+        "acceptance_mean": 0.6085997794928335,
+        "n": 1814
+      }
+    ]
+  },
+  "pairwise_tests": {
+    "A_vs_C_fisher_z_diff": {
+      "z": -4.005133604227652,
+      "p": 6.198243850175089e-05
+    },
+    "B_vs_D_fisher_z_diff": {
+      "z": NaN,
+      "p": NaN,
+      "reason": "not_applicable_for_two_domain_delta"
+    }
+  }
+}

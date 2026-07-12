@@ -1,0 +1,158 @@
+{
+  "input": [
+    "corpus/v1/model=llama8b/drafter=EAGLE-3/dataset=math500/temperature=0/split=calibration/e39dc378d60b4bc6bf842dc865fc1b02-0.parquet",
+    "corpus/v1/model=llama8b/drafter=EAGLE-3/dataset=livecodebench/temperature=0/split=calibration/e39dc378d60b4bc6bf842dc865fc1b02-0.parquet"
+  ],
+  "rows_after_filters": 41626,
+  "run_ids": [
+    "livecodebench_0",
+    "livecodebench_101",
+    "livecodebench_104",
+    "livecodebench_109",
+    "livecodebench_11",
+    "livecodebench_111",
+    "livecodebench_113",
+    "livecodebench_114",
+    "livecodebench_117",
+    "livecodebench_118",
+    "livecodebench_119",
+    "livecodebench_12",
+    "livecodebench_122",
+    "livecodebench_123",
+    "livecodebench_125",
+    "livecodebench_126",
+    "livecodebench_127",
+    "livecodebench_128",
+    "livecodebench_13",
+    "livecodebench_132",
+    "livecodebench_133",
+    "livecodebench_134",
+    "livecodebench_136",
+    "livecodebench_143",
+    "livecodebench_146",
+    "livecodebench_15",
+    "livecodebench_22",
+    "livecodebench_23",
+    "livecodebench_26",
+    "livecodebench_27",
+    "math500_1",
+    "math500_10",
+    "math500_101",
+    "math500_103",
+    "math500_105",
+    "math500_106",
+    "math500_107",
+    "math500_108",
+    "math500_109",
+    "math500_110",
+    "math500_113",
+    "math500_114",
+    "math500_117",
+    "math500_123",
+    "math500_125",
+    "math500_126",
+    "math500_128",
+    "math500_130",
+    "math500_131",
+    "math500_132",
+    "math500_135",
+    "math500_138",
+    "math500_14",
+    "math500_140",
+    "math500_141",
+    "math500_142",
+    "math500_148",
+    "math500_149",
+    "math500_150",
+    "math500_151"
+  ],
+  "datasets": [
+    "livecodebench",
+    "math500"
+  ],
+  "cell_A_draft_within": {
+    "k": 60,
+    "rho": -0.11682739807284363,
+    "ci_low": -0.14181058103249514,
+    "ci_high": -0.09169547898430333,
+    "tau2": 0.008554166912526457,
+    "bootstrap_ci_low": -0.1392971267291222,
+    "bootstrap_ci_high": -0.09299192730741658,
+    "n_total": 41626
+  },
+  "cell_B_draft_across": {
+    "cell": "B_draft_across",
+    "available": true,
+    "n_domains": 2,
+    "method": "two_domain_delta",
+    "note": "Pearson across exactly two domain means is degenerate (always |rho|=1); reporting signed deltas instead.",
+    "entropy_delta": -0.7108415594020405,
+    "acceptance_delta": 0.009901618780573718,
+    "acceptance_delta_bootstrap_ci": [
+      -0.019997489952439943,
+      0.047158962874159445
+    ],
+    "domain_means": [
+      {
+        "dataset": "livecodebench",
+        "entropy_mean": 5.47230005164151,
+        "acceptance_mean": 0.6431917862838915,
+        "n": 20064
+      },
+      {
+        "dataset": "math500",
+        "entropy_mean": 4.76145849223947,
+        "acceptance_mean": 0.6530934050644652,
+        "n": 21562
+      }
+    ]
+  },
+  "cell_C_target_within": {
+    "k": 60,
+    "rho": -0.00771349083814474,
+    "ci_low": -0.019974980617238684,
+    "ci_high": 0.004550318873977194,
+    "tau2": 0.000873994691229916,
+    "bootstrap_ci_low": -0.01784266408525469,
+    "bootstrap_ci_high": 0.004113739220313776,
+    "n_total": 41626
+  },
+  "cell_D_target_across": {
+    "cell": "D_target_across",
+    "available": true,
+    "n_domains": 2,
+    "method": "two_domain_delta",
+    "note": "Pearson across exactly two domain means is degenerate (always |rho|=1); reporting signed deltas instead.",
+    "entropy_delta": -0.5924546893894924,
+    "acceptance_delta": 0.009901618780573718,
+    "acceptance_delta_bootstrap_ci": [
+      -0.019997489952439943,
+      0.047158962874159445
+    ],
+    "domain_means": [
+      {
+        "dataset": "livecodebench",
+        "entropy_mean": 1.2118968565196429,
+        "acceptance_mean": 0.6431917862838915,
+        "n": 20064
+      },
+      {
+        "dataset": "math500",
+        "entropy_mean": 0.6194421671301504,
+        "acceptance_mean": 0.6530934050644652,
+        "n": 21562
+      }
+    ]
+  },
+  "pairwise_tests": {
+    "A_vs_C_fisher_z_diff": {
+      "z": -15.81827010511553,
+      "p": 0.0
+    },
+    "B_vs_D_fisher_z_diff": {
+      "z": NaN,
+      "p": NaN,
+      "reason": "not_applicable_for_two_domain_delta"
+    }
+  }
+}

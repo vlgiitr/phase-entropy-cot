@@ -1,0 +1,73 @@
+{
+  "input_corpus_path": "corpus/v1",
+  "analysis_mode": "p2_h3_state_vs_level",
+  "train_split": "calibration",
+  "eval_split": "validation",
+  "dataset_filter": "math500",
+  "entropy_col": "draft_entropy",
+  "rows_train": 25076,
+  "rows_eval": 28479,
+  "runs_train": 40,
+  "runs_eval": 40,
+  "max_traces": 40,
+  "hmm_state_means": [
+    2.7592293680763103,
+    8.916683305089675
+  ],
+  "high_entropy_state": 1,
+  "hmm_mean_run_length": 2.7876796644407555,
+  "ewma_candidates": [
+    0.1,
+    0.2,
+    0.3,
+    0.5
+  ],
+  "ewma_bandwidth_distance": {
+    "0.1": 7.2123203355592445,
+    "0.2": 2.2123203355592445,
+    "0.3": 0.5456536688925779,
+    "0.5": 0.7876796644407555
+  },
+  "matched_alpha": 0.3,
+  "scores": {
+    "M_a": {
+      "name": "M_a",
+      "llf": -7591.286042032432,
+      "aic": 15202.572084064865,
+      "c_index": 0.8544621132619631,
+      "n_rows": 28479
+    },
+    "M_b": {
+      "name": "M_b",
+      "llf": -7575.714365790488,
+      "aic": 15173.428731580976,
+      "c_index": 0.8508695134068296,
+      "n_rows": 28479
+    },
+    "M_c": {
+      "name": "M_c",
+      "llf": -7574.2290821910265,
+      "aic": 15172.458164382053,
+      "c_index": 0.8492472376372096,
+      "n_rows": 28479
+    }
+  },
+  "lr_tests": {
+    "M_b_vs_M_a": {
+      "lr_stat": 31.14335248388852,
+      "df": 1,
+      "pvalue": 2.3965867290698384e-08
+    },
+    "M_c_vs_M_b": {
+      "lr_stat": 2.9705671989231632,
+      "df": 1,
+      "pvalue": 0.08479212011267667
+    }
+  },
+  "incremental_c_index": {
+    "delta_M_c_minus_M_b": -0.0016222757696200407,
+    "bootstrap_ci_low": -0.0024361666527143917,
+    "bootstrap_ci_high": -0.0007658121620828545,
+    "bootstrap_reps": 200
+  }
+}

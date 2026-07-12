@@ -1,0 +1,23 @@
+{
+  "raw": {
+    "n_traces": 175,
+    "dip_reject_fraction": 0.18857142857142858,
+    "gmm_prefer_2_fraction": 0.9885714285714285,
+    "dip_stat_median": 0.0146665912653749,
+    "delta_bic_median": 92.01955067366498,
+    "n_eff_median": 443.7521844576633,
+    "hmm_lr_reject_fraction": 1.0
+  },
+  "masked": {
+    "n_traces": 175,
+    "dip_reject_fraction": 0.13714285714285715,
+    "gmm_prefer_2_fraction": 0.9714285714285714,
+    "dip_stat_median": 0.016340628825675156,
+    "delta_bic_median": 45.91495887683004,
+    "n_eff_median": 308.0,
+    "hmm_lr_reject_fraction": 0.9885714285714285
+  },
+  "think_only": {
+    "n_traces": 0
+  }
+}

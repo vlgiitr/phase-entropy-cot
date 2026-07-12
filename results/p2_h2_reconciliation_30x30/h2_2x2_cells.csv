@@ -1,0 +1,5 @@
+cell,estimate,ci_low,ci_high,n,k,metric,scope,kind
+A_draft_within,0.06471463426589681,0.049887618784604404,0.07951313125999733,41583,60,draft_top1_prob,within_trace,correlation
+B_draft_across_trace,0.41970574755019485,0.1757168177769682,0.6145290640704602,41583,60,draft_top1_prob,across_trace,correlation
+C_token_within,-0.002693484267232781,-0.01361956326723173,0.00823323786729245,41583,60,target_entropy,within_trace,correlation
+D_token_across_trace,-0.1336500924009558,-0.3970746584850912,0.1426648827790137,41583,60,target_entropy,across_trace,correlation

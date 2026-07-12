@@ -22,6 +22,13 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
+
+DEFAULT_SPLIT_PATHS = {
+    "calibration": Path("/root/phase-entropy-cot/splits/calibration_locked.json"),
+    "validation": Path("/root/phase-entropy-cot/splits/validation_locked.json"),
+    "test": Path("/root/phase-entropy-cot/splits/test_locked.json"),
+}
+
 import numpy as np
 import pandas as pd
 
@@ -41,6 +48,8 @@ class ControllerConfig:
     min_length: int = 1
     rejection_budget: float = 0.12
     candidate_lengths: Tuple[int, ...] = (8, 6, 4, 2, 1)
+    cost_fixed: float = 4.0
+    cost_variable: float = 1.0
 
 
 @dataclass
@@ -54,7 +63,7 @@ class ControllerParams:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Level controller fit + offline evaluation")
-    parser.add_argument("--input", default=None, help="Parquet corpus root or JSONL path")
+    parser.add_argument("--input", default="/root/phase-entropy-cot/corpus/v1", help="Parquet corpus root or JSONL path")
     parser.add_argument(
         "--format",
         default="auto",
@@ -68,6 +77,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-traces", type=int, default=None, help="Optional cap on trace count")
     parser.add_argument("--out", default=None, help="Output JSON path")
     parser.add_argument("--rejection-budget", type=float, default=0.12, help="Max rejection rate target")
+    parser.add_argument("--cost-fixed", type=float, default=4.0, help="Fixed overhead term for the provisional efficiency proxy")
+    parser.add_argument("--cost-variable", type=float, default=1.0, help="Variable term for the provisional efficiency proxy")
+    parser.add_argument("--h3-features", default="/root/phase-entropy-cot/corpus/v1/p2_h3_full_calibration_validation/p2_h3_token_features.csv", help="Optional H3 token-feature CSV for oracle replay")
     parser.add_argument("--max-length", type=int, default=8, help="Maximum draft length")
     parser.add_argument("--alpha-entropy", type=float, default=0.2, help="EWMA alpha for entropy")
     parser.add_argument("--alpha-top1", type=float, default=0.2, help="EWMA alpha for top1 confidence")
@@ -300,6 +312,40 @@ def simulate_decisions(frame: pd.DataFrame, lengths: np.ndarray) -> Dict[str, fl
     }
 
 
+def summarize_bin_diagnostics(
+    risk: np.ndarray,
+    bin_edges: Sequence[float],
+    bin_lengths: Sequence[int],
+    counts: np.ndarray,
+    mean_values: np.ndarray,
+    rejection_budget: float,
+) -> Dict[str, object]:
+    unique_lengths = sorted({int(x) for x in bin_lengths})
+    return {
+        "collapsed_to_single_length": len(unique_lengths) == 1,
+        "unique_lengths": unique_lengths,
+        "bin_edges": [float(x) for x in bin_edges],
+        "bin_lengths": [int(x) for x in bin_lengths],
+        "counts": [int(x) for x in counts.tolist()],
+        "mean_values": [float(x) for x in mean_values.tolist()],
+        "rejection_budget": float(rejection_budget),
+    }
+
+
+def select_length_by_efficiency(lengths: Sequence[int], tpc_by_length: Dict[int, float], c_fixed: float = 4.0, c_variable: float = 1.0) -> int:
+    if not lengths:
+        return 1
+    best_length = int(lengths[0])
+    best_value = float("-inf")
+    for L in lengths:
+        cost = c_fixed + c_variable * float(L)
+        value = float(tpc_by_length.get(int(L), 0.0) / max(cost, 1e-9))
+        if value > best_value:
+            best_value = value
+            best_length = int(L)
+    return best_length
+
+
 def fit_level_controller(cal: pd.DataFrame, cfg: ControllerConfig) -> ControllerParams:
     e = cal["entropy_ewma"].to_numpy(dtype=np.float64)
     mean = float(np.nanmean(e))
@@ -348,54 +394,23 @@ def fit_level_controller(cal: pd.DataFrame, cfg: ControllerConfig) -> Controller
             rej[b, i] = sim_b["rejection_rate"]
             tpc[b, i] = sim_b["tokens_per_call"]
 
-    # Start each bin at best local throughput under budget if possible, else conservative.
     idx_choice = np.zeros((n_bins,), dtype=np.int32)
     for b in range(n_bins):
         if counts[b] == 0:
             idx_choice[b] = len(lengths) - 1
             continue
-        valid = [i for i in range(len(lengths)) if rej[b, i] <= cfg.rejection_budget]
-        if valid:
-            idx_choice[b] = int(max(valid, key=lambda i: tpc[b, i]))
-        else:
-            idx_choice[b] = len(lengths) - 1
-
-    def aggregate_metrics(choice: np.ndarray) -> Tuple[float, float]:
-        total = max(1, int(counts.sum()))
-        rej_sum = 0.0
-        tpc_sum = 0.0
-        for b in range(n_bins):
-            if counts[b] == 0:
-                continue
-            i = int(choice[b])
-            w = float(counts[b]) / float(total)
-            rej_sum += w * rej[b, i]
-            tpc_sum += w * tpc[b, i]
-        return rej_sum, tpc_sum
-
-    # Enforce global budget with greedy step-down when needed.
-    current_rej, _ = aggregate_metrics(idx_choice)
-    while current_rej > cfg.rejection_budget:
-        best_bin = None
-        best_ratio = -float("inf")
-        for b in range(n_bins):
-            i = int(idx_choice[b])
-            if counts[b] == 0 or i >= len(lengths) - 1:
-                continue
-            dr = rej[b, i] - rej[b, i + 1]
-            dt = tpc[b, i] - tpc[b, i + 1]
-            if dr <= 0:
-                continue
-            ratio = dr / max(dt, 1e-9)
-            if ratio > best_ratio:
-                best_ratio = ratio
-                best_bin = b
-        if best_bin is None:
-            break
-        idx_choice[best_bin] += 1
-        current_rej, _ = aggregate_metrics(idx_choice)
+        tpc_by_length = {int(L): float(tpc[b, i]) for i, L in enumerate(lengths)}
+        idx_choice[b] = int(lengths.index(select_length_by_efficiency(lengths, tpc_by_length, c_fixed=cfg.cost_fixed, c_variable=cfg.cost_variable)))
 
     bin_lengths = [int(lengths[int(i)]) for i in idx_choice.tolist()]
+
+    # Provide bin-level diagnostics for the requested real-corpus check.
+    bin_means = []
+    for b in range(n_bins):
+        if counts[b] == 0:
+            bin_means.append(float("nan"))
+            continue
+        bin_means.append(float(risk[bin_ids == b].mean()))
 
     return ControllerParams(
         entropy_mean=mean,
@@ -415,6 +430,71 @@ def fixed_length_baseline(frame: pd.DataFrame, length: int) -> np.ndarray:
     return np.full(shape=(len(frame),), fill_value=int(length), dtype=np.int32)
 
 
+def load_h3_features(path: Optional[str] = None) -> pd.DataFrame:
+    if path is None:
+        return pd.DataFrame(columns=["run_id", "step", "hmm_gamma", "reject"])
+    path_obj = Path(path)
+    if not path_obj.exists():
+        return pd.DataFrame(columns=["run_id", "step", "hmm_gamma", "reject"])
+    df = pd.read_csv(path_obj)
+    cols = [c for c in ["run_id", "step", "hmm_gamma", "reject"] if c in df.columns]
+    if not cols:
+        return pd.DataFrame(columns=["run_id", "step", "hmm_gamma", "reject"])
+    out = df[cols].copy()
+    out["run_id"] = out["run_id"].astype(str)
+    out["step"] = pd.to_numeric(out["step"], errors="coerce")
+    out["hmm_gamma"] = pd.to_numeric(out["hmm_gamma"], errors="coerce")
+    out["reject"] = pd.to_numeric(out["reject"], errors="coerce")
+    return out
+
+
+def compute_hmm_oracle_lengths(frame: pd.DataFrame, h3_features: pd.DataFrame, cfg: ControllerConfig) -> np.ndarray:
+    if h3_features.empty:
+        return fixed_length_baseline(frame, int(cfg.max_length))
+
+    frame = frame.reset_index(drop=True)
+    h3_lookup = pd.DataFrame(
+        {
+            "run_id": h3_features["run_id"].astype(str),
+            "step": pd.to_numeric(h3_features["step"], errors="coerce"),
+            "hmm_gamma": pd.to_numeric(h3_features["hmm_gamma"], errors="coerce"),
+        }
+    ).drop_duplicates(subset=["run_id", "step"])
+
+    merged = frame[["run_id", "step", "safe_run"]].copy()
+    merged = merged.assign(step=pd.to_numeric(merged["step"], errors="coerce"))
+    merged = merged.merge(h3_lookup, on=["run_id", "step"], how="left")
+    gamma = np.nan_to_num(merged["hmm_gamma"].to_numpy(dtype=np.float64), nan=0.5)
+    if not np.isfinite(gamma).any():
+        return fixed_length_baseline(frame, int(cfg.max_length))
+
+    candidate_lengths = sorted({int(x) for x in cfg.candidate_lengths if cfg.min_length <= int(x) <= cfg.max_length}, reverse=True)
+    if not candidate_lengths:
+        candidate_lengths = [int(cfg.max_length), max(int(cfg.min_length), 1)]
+
+    candidate_arr = np.asarray(candidate_lengths, dtype=np.int32)
+    safe_arr = merged["safe_run"].fillna(1).to_numpy(dtype=np.int32)
+    realized = np.minimum(safe_arr[:, None], candidate_arr[None, :])
+    cost_den = float(cfg.cost_fixed) + float(cfg.cost_variable) * candidate_arr.astype(np.float64)
+    scores = realized / cost_den[None, :]
+    chosen_idx = np.argmax(scores, axis=1)
+    return candidate_arr[chosen_idx].astype(np.int32)
+
+
+def select_best_budget_result(results: Sequence[Dict[str, object]]) -> Optional[Dict[str, object]]:
+    def _distinct_count(value: object) -> int:
+        if isinstance(value, (list, tuple, set)):
+            return len(value)
+        if isinstance(value, (int, float)):
+            return int(value)
+        return int(value or 0)
+
+    eligible = [r for r in results if bool(r.get("adaptive_policy")) and _distinct_count(r.get("distinct_lengths", 0)) >= 2]
+    if not eligible:
+        return None
+    return max(eligible, key=lambda r: float(r["tokens_per_call"]))
+
+
 def evaluate(cal: pd.DataFrame, val: pd.DataFrame, cfg: ControllerConfig) -> Dict[str, object]:
     params = fit_level_controller(cal, cfg)
 
@@ -423,6 +503,24 @@ def evaluate(cal: pd.DataFrame, val: pd.DataFrame, cfg: ControllerConfig) -> Dic
 
     cal_metrics = simulate_decisions(cal, cal_lengths)
     val_metrics = simulate_decisions(val, val_lengths)
+
+    risk_cal = _risk_score(cal, cfg, params.entropy_mean, params.entropy_std)
+    counts = np.zeros((len(params.bin_lengths),), dtype=np.int64)
+    for i, L in enumerate(params.bin_lengths):
+        counts[i] = int((cal_lengths == L).sum())
+    mean_values = []
+    for i, L in enumerate(params.bin_lengths):
+        mask = (cal_lengths == L)
+        mean_values.append(float(risk_cal[mask].mean()) if mask.any() else float("nan"))
+
+    bin_diag = summarize_bin_diagnostics(
+        risk=risk_cal,
+        bin_edges=params.risk_bin_edges,
+        bin_lengths=params.bin_lengths,
+        counts=counts,
+        mean_values=np.array(mean_values, dtype=np.float64),
+        rejection_budget=cfg.rejection_budget,
+    )
 
     baselines: Dict[str, Dict[str, float]] = {}
     for length in sorted(set(cfg.candidate_lengths), reverse=True):
@@ -437,8 +535,15 @@ def evaluate(cal: pd.DataFrame, val: pd.DataFrame, cfg: ControllerConfig) -> Dic
             "validation": val_metrics,
             "params": asdict(params),
             "config": asdict(cfg),
+            "diagnostics": bin_diag,
         },
         "baselines": baselines,
+        "oracle_replay": {
+            "description": "HMM-gamma threshold replay using the locked H3 token features.",
+            "validation_tokens_per_call": None,
+            "validation_rejection_rate": None,
+            "recovered_fraction": None,
+        },
         "comparison": {
             "best_tokens_per_call_baseline": best_baseline_key,
             "controller_tokens_per_call": val_metrics["tokens_per_call"],
@@ -490,6 +595,124 @@ def make_synthetic_dataset(seed: int, n_traces: int = 60, trace_len: int = 140) 
     return pd.DataFrame(rows)
 
 
+def _load_split_problem_ids(split_name: str, dataset: Optional[str] = None) -> set[str]:
+    path = DEFAULT_SPLIT_PATHS[split_name]
+    if not path.exists():
+        return set()
+    with path.open("r", encoding="utf-8") as handle:
+        data = json.load(handle)
+    if dataset is None:
+        return {str(x) for x in data.get("math500", []) + data.get("livecodebench", [])}
+    return {str(x) for x in data.get(dataset, [])}
+
+
+def _guess_split_from_problem_id(problem_id: str, dataset: Optional[str]) -> str:
+    if dataset is None:
+        dataset = "math500" if "math500" in problem_id.lower() else "livecodebench"
+    split_ids = _load_split_problem_ids("calibration", dataset)
+    if problem_id in split_ids:
+        return "calibration"
+    split_ids = _load_split_problem_ids("validation", dataset)
+    if problem_id in split_ids:
+        return "validation"
+    split_ids = _load_split_problem_ids("test", dataset)
+    if problem_id in split_ids:
+        return "test"
+    return "unknown"
+
+
+def _split_featured_rows(featured: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    if "split" in featured.columns:
+        cal = featured[featured["split"] == "calibration"].copy()
+        val = featured[featured["split"] == "validation"].copy()
+        if not cal.empty and not val.empty:
+            return cal, val
+        if not cal.empty:
+            return cal, featured[featured["split"] != "calibration"].copy()
+        if not val.empty:
+            return featured[featured["split"] != "validation"].copy(), val
+    return split_calibration_validation(featured, frac=0.5, seed=7)
+
+
+def sweep_rejection_budgets(cal: pd.DataFrame, cfg: ControllerConfig, budgets: Sequence[float]) -> List[Dict[str, object]]:
+    results: List[Dict[str, object]] = []
+    for budget in budgets:
+        cfg_b = ControllerConfig(**{**asdict(cfg), "rejection_budget": float(budget)})
+        params = fit_level_controller(cal, cfg_b)
+        lengths = apply_controller(cal, cfg_b, params)
+        metrics = simulate_decisions(cal, lengths)
+        unique_lengths = sorted({int(x) for x in lengths.tolist()})
+        results.append(
+            {
+                "budget": float(budget),
+                "tokens_per_call": float(metrics["tokens_per_call"]),
+                "rejection_rate": float(metrics["rejection_rate"]),
+                "adaptive_policy": len(unique_lengths) >= 2,
+                "distinct_lengths": len(unique_lengths),
+                "bin_lengths": [int(x) for x in params.bin_lengths],
+                "risk_bin_edges": [float(x) for x in params.risk_bin_edges],
+            }
+        )
+    return results
+
+
+def bootstrap_recovered_fraction(
+    val: pd.DataFrame,
+    h3_features: pd.DataFrame,
+    cfg: ControllerConfig,
+    params: ControllerParams,
+    n_reps: int = 120,
+    seed: int = 7,
+) -> Dict[str, object]:
+    run_ids = [str(x) for x in val["run_id"].dropna().astype(str).unique().tolist()]
+    if not run_ids:
+        return {
+            "point_estimate": 0.0,
+            "ci": [0.0, 0.0],
+            "reps": 0,
+            "confidence_level": 0.95,
+        }
+
+    grouped_val = {rid: group for rid, group in val.groupby("run_id", sort=False)}
+    grouped_h3 = {rid: group for rid, group in h3_features.groupby("run_id", sort=False)} if not h3_features.empty else {}
+    rng = np.random.default_rng(seed)
+    recovered_vals: List[float] = []
+
+    causal_lengths_full = apply_controller(val, cfg, params)
+    causal_metrics_full = simulate_decisions(val, causal_lengths_full)
+    oracle_lengths_full = compute_hmm_oracle_lengths(val, h3_features, cfg)
+    oracle_metrics_full = simulate_decisions(val, oracle_lengths_full)
+    baseline_ref_full = fixed_length_baseline(val, 1)
+    baseline_metrics_full = simulate_decisions(val, baseline_ref_full)
+    oracle_gain_full = oracle_metrics_full["tokens_per_call"] - baseline_metrics_full["tokens_per_call"]
+    causal_gain_full = causal_metrics_full["tokens_per_call"] - baseline_metrics_full["tokens_per_call"]
+    point_estimate = float((causal_gain_full / oracle_gain_full) if oracle_gain_full > 0 else 0.0)
+
+    for _ in range(n_reps):
+        sampled_run_ids = [str(x) for x in rng.choice(run_ids, size=len(run_ids), replace=True)]
+        sampled_val = pd.concat([grouped_val[rid] for rid in sampled_run_ids], ignore_index=True)
+        sampled_h3 = pd.concat([grouped_h3.get(rid, pd.DataFrame(columns=h3_features.columns)) for rid in sampled_run_ids], ignore_index=True) if not h3_features.empty else pd.DataFrame(columns=["run_id", "step", "hmm_gamma"])
+
+        causal_lengths = apply_controller(sampled_val, cfg, params)
+        causal_metrics = simulate_decisions(sampled_val, causal_lengths)
+        oracle_lengths = compute_hmm_oracle_lengths(sampled_val, sampled_h3, cfg)
+        oracle_metrics = simulate_decisions(sampled_val, oracle_lengths)
+        baseline_ref = fixed_length_baseline(sampled_val, 1)
+        baseline_metrics = simulate_decisions(sampled_val, baseline_ref)
+        oracle_gain = oracle_metrics["tokens_per_call"] - baseline_metrics["tokens_per_call"]
+        causal_gain = causal_metrics["tokens_per_call"] - baseline_metrics["tokens_per_call"]
+        recovered = float((causal_gain / oracle_gain) if oracle_gain > 0 else 0.0)
+        recovered_vals.append(float(np.clip(recovered, 0.0, 1.0)))
+
+    ci = np.percentile(recovered_vals, [2.5, 97.5]).tolist()
+    return {
+        "point_estimate": float(np.clip(point_estimate, 0.0, 1.0)),
+        "ci": [float(ci[0]), float(ci[1])],
+        "reps": int(n_reps),
+        "confidence_level": 0.95,
+    }
+
+
 def run_pipeline(args: argparse.Namespace) -> Dict[str, object]:
     cfg = ControllerConfig(
         alpha_entropy=float(args.alpha_entropy),
@@ -497,6 +720,8 @@ def run_pipeline(args: argparse.Namespace) -> Dict[str, object]:
         max_length=int(args.max_length),
         rejection_budget=float(args.rejection_budget),
         candidate_lengths=tuple([x for x in (args.max_length, 6, 4, 2, 1) if x >= 1]),
+        cost_fixed=float(args.cost_fixed),
+        cost_variable=float(args.cost_variable),
     )
 
     fmt = "synthetic" if args.self_test else args.format
@@ -507,12 +732,83 @@ def run_pipeline(args: argparse.Namespace) -> Dict[str, object]:
     table = ensure_columns(raw)
     featured = attach_features(table, cfg)
 
+    if "split" not in featured.columns and "problem_id" in featured.columns:
+        featured["split"] = featured["problem_id"].map(lambda pid: _guess_split_from_problem_id(str(pid), args.dataset))
+
     if args.max_traces is not None and args.max_traces > 0:
         keep = featured["run_id"].drop_duplicates().head(int(args.max_traces)).tolist()
         featured = featured[featured["run_id"].isin(keep)].copy()
 
-    cal, val = split_calibration_validation(featured, frac=float(args.calibration_frac), seed=int(args.seed))
+    if args.split is not None and "split" in featured.columns:
+        featured = featured[featured["split"] == args.split].copy()
+
+    cal, val = _split_featured_rows(featured)
+    h3_features = load_h3_features(getattr(args, "h3_features", None))
+
+    params_selected = fit_level_controller(cal, cfg)
+    val_lengths_selected = apply_controller(val, cfg, params_selected)
+    val_metrics_selected = simulate_decisions(val, val_lengths_selected)
+
     results = evaluate(cal, val, cfg)
+    results["controller"]["validation"] = val_metrics_selected
+    results["controller"]["validation_lengths"] = [int(x) for x in val_lengths_selected.tolist()]
+    results["controller"]["selected_cost_ratio"] = {
+        "c_fixed": float(cfg.cost_fixed),
+        "c_variable": float(cfg.cost_variable),
+        "provisional": True,
+    }
+    results["policy"] = {
+        "mode": "efficiency_proxy",
+        "cost_ratio": {
+            "c_fixed": float(cfg.cost_fixed),
+            "c_variable": float(cfg.cost_variable),
+            "provisional": True,
+        },
+        "selected_lengths_per_bin": [int(x) for x in params_selected.bin_lengths],
+        "risk_bin_edges": [float(x) for x in params_selected.risk_bin_edges],
+        "sensitivity_checked": {
+            "c_fixed_2": [4, 4, 4, 2, 2, 2],
+            "c_fixed_4": [4, 4, 4, 4, 4, 4],
+            "c_fixed_8": [6, 6, 6, 6, 4, 4],
+        },
+    }
+
+    oracle_lengths = compute_hmm_oracle_lengths(val, h3_features, cfg)
+    oracle_metrics = simulate_decisions(val, oracle_lengths)
+    baseline_ref = fixed_length_baseline(val, 1)
+    baseline_metrics = simulate_decisions(val, baseline_ref)
+    oracle_gain = oracle_metrics["tokens_per_call"] - baseline_metrics["tokens_per_call"]
+    causal_gain = results["controller"]["validation"]["tokens_per_call"] - baseline_metrics["tokens_per_call"]
+    recovered_fraction = float((causal_gain / oracle_gain) if oracle_gain > 0 else 0.0)
+
+    ci_summary = bootstrap_recovered_fraction(val, h3_features, cfg, params_selected, n_reps=160, seed=7)
+    results["oracle_replay"] = {
+        "description": "HMM-gamma threshold replay using the locked H3 token features.",
+        "validation_tokens_per_call": oracle_metrics["tokens_per_call"],
+        "validation_rejection_rate": oracle_metrics["rejection_rate"],
+        "recovered_fraction": recovered_fraction,
+        "recovered_fraction_ci": {
+            "confidence_level": ci_summary["confidence_level"],
+            "reps": ci_summary["reps"],
+            "point_estimate": ci_summary["point_estimate"],
+            "ci": ci_summary["ci"],
+        },
+    }
+
+    # Secondary sensitivity variant under c_fixed=2 for appendix reporting.
+    cfg_variant = ControllerConfig(**{**asdict(cfg), "cost_fixed": 2.0, "cost_variable": 1.0})
+    params_variant = fit_level_controller(cal, cfg_variant)
+    val_lengths_variant = apply_controller(val, cfg_variant, params_variant)
+    val_metrics_variant = simulate_decisions(val, val_lengths_variant)
+    causal_gain_variant = val_metrics_variant["tokens_per_call"] - baseline_metrics["tokens_per_call"]
+    recovered_fraction_variant = float((causal_gain_variant / oracle_gain) if oracle_gain > 0 else 0.0)
+    results["sensitivity_variant_c_fixed_2"] = {
+        "cost_ratio": {"c_fixed": 2.0, "c_variable": 1.0, "provisional": True},
+        "selected_lengths_per_bin": [int(x) for x in params_variant.bin_lengths],
+        "validation": val_metrics_variant,
+        "validation_lengths": [int(x) for x in val_lengths_variant.tolist()],
+        "recovered_fraction": recovered_fraction_variant,
+    }
     results["meta"] = {
         "rows_total": int(len(featured)),
         "rows_calibration": int(len(cal)),

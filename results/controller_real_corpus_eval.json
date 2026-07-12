@@ -1,0 +1,150 @@
+{
+  "controller": {
+    "calibration": {
+      "rows": 116892,
+      "mean_chosen_length": 1.0,
+      "tokens_per_call": 0.6457841426273826,
+      "rejection_rate": 0.35421585737261746
+    },
+    "validation": {
+      "rows": 59205,
+      "mean_chosen_length": 1.0,
+      "tokens_per_call": 0.6627480787095684,
+      "rejection_rate": 0.3372519212904316
+    },
+    "params": {
+      "entropy_mean": 5.158841282623248,
+      "entropy_std": 1.6871252371966379,
+      "risk_bin_edges": [
+        -0.4858661018002049,
+        -0.14326594645433902,
+        0.1529780002409213,
+        0.46854009985193407,
+        0.8757157704529916
+      ],
+      "bin_lengths": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "lengths_desc": [
+        8,
+        6,
+        4,
+        2,
+        1
+      ]
+    },
+    "config": {
+      "alpha_entropy": 0.2,
+      "alpha_top1": 0.2,
+      "entropy_weight": 0.65,
+      "uncertainty_weight": 0.35,
+      "max_length": 8,
+      "min_length": 1,
+      "rejection_budget": 0.12,
+      "candidate_lengths": [
+        8,
+        6,
+        4,
+        2,
+        1
+      ]
+    },
+    "diagnostics": {
+      "collapsed_to_single_length": true,
+      "unique_lengths": [
+        1
+      ],
+      "bin_edges": [
+        -0.4858661018002049,
+        -0.14326594645433902,
+        0.1529780002409213,
+        0.46854009985193407,
+        0.8757157704529916
+      ],
+      "bin_lengths": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "counts": [
+        116892,
+        116892,
+        116892,
+        116892,
+        116892,
+        116892
+      ],
+      "mean_values": [
+        0.19723498746561072,
+        0.19723498746561072,
+        0.19723498746561072,
+        0.19723498746561072,
+        0.19723498746561072,
+        0.19723498746561072
+      ],
+      "rejection_budget": 0.12
+    }
+  },
+  "baselines": {
+    "fixed_L8": {
+      "rows": 59205,
+      "mean_chosen_length": 8.0,
+      "tokens_per_call": 2.1391605438729835,
+      "rejection_rate": 0.9245334008951946
+    },
+    "fixed_L6": {
+      "rows": 59205,
+      "mean_chosen_length": 6.0,
+      "tokens_per_call": 1.9658812600287139,
+      "rejection_rate": 0.8717169158010303
+    },
+    "fixed_L4": {
+      "rows": 59205,
+      "mean_chosen_length": 4.0,
+      "tokens_per_call": 1.6672916138839624,
+      "rejection_rate": 0.7684148298285618
+    },
+    "fixed_L2": {
+      "rows": 59205,
+      "mean_chosen_length": 2.0,
+      "tokens_per_call": 1.1183683810488978,
+      "rejection_rate": 0.5443796976606705
+    },
+    "fixed_L1": {
+      "rows": 59205,
+      "mean_chosen_length": 1.0,
+      "tokens_per_call": 0.6627480787095684,
+      "rejection_rate": 0.3372519212904316
+    }
+  },
+  "oracle_replay": {
+    "description": "HMM-gamma threshold replay using the locked H3 token features.",
+    "validation_tokens_per_call": 1.179038932522591,
+    "validation_rejection_rate": 0.5439743264926948,
+    "recovered_fraction": 0.0
+  },
+  "comparison": {
+    "best_tokens_per_call_baseline": "fixed_L8",
+    "controller_tokens_per_call": 0.6627480787095684,
+    "baseline_tokens_per_call": 2.1391605438729835,
+    "controller_rejection_rate": 0.3372519212904316,
+    "baseline_rejection_rate": 0.9245334008951946,
+    "tokens_per_call_delta": -1.4764124651634152
+  },
+  "meta": {
+    "rows_total": 236235,
+    "rows_calibration": 116892,
+    "rows_validation": 59205,
+    "traces_total": 350,
+    "problems_total": 350,
+    "format": "parquet"
+  }
+}

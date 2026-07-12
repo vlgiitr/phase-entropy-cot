@@ -1,0 +1,7 @@
+cell,run_id,dataset,n,rho,p_value
+A_draft_within,livecodebench_0,unknown,631,-0.04549339160409555,0.2538258483377257
+A_draft_within,livecodebench_101,unknown,674,-0.20382719918572986,9.398991389502692e-08
+A_draft_within,livecodebench_104,unknown,640,-0.10745423841813763,0.006509087514124614
+C_target_within,livecodebench_0,unknown,631,0.021470549752818757,0.5903515034709922
+C_target_within,livecodebench_101,unknown,674,0.04170636741040827,0.2795988442287666
+C_target_within,livecodebench_104,unknown,640,-0.06719205624693866,0.08942544288111985

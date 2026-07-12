@@ -1,0 +1,66 @@
+{
+  "analysis_label": "exploratory, secondary analysis",
+  "analysis_mode": "h3_exploratory_state_alone",
+  "confirmatory_reference_locked": {
+    "path": "/root/phase-entropy-cot/corpus/v1/p2_h3_full_calibration_validation/p2_h3_summary.json",
+    "note": "Original M_a/M_b/M_c confirmatory ladder remains unchanged.",
+    "M_c_vs_M_b": {
+      "lr_stat": 0.17666445128634223,
+      "df": 1,
+      "pvalue": 0.6742555688735601
+    }
+  },
+  "data_and_split": {
+    "train_split": "calibration",
+    "eval_split": "validation",
+    "runs_train": 175,
+    "runs_eval": 87,
+    "rows_train": 116892,
+    "rows_eval": 59205,
+    "gamma_source": "/root/phase-entropy-cot/corpus/v1/p2_h3_full_calibration_validation/p2_h3_token_features.csv",
+    "gamma_reused_without_refit": true
+  },
+  "models": {
+    "M_a": {
+      "name": "M_a",
+      "formula": "reject ~ draft_entropy + bs(position, df=5)",
+      "llf": -33544.82118254201,
+      "aic": 67103.64236508402,
+      "c_index": 0.7175746622074376,
+      "n_rows": 59205
+    },
+    "M_a_state": {
+      "name": "M_a_state",
+      "formula": "reject ~ draft_entropy + hmm_gamma + bs(position, df=5)",
+      "llf": -33544.62560872889,
+      "aic": 67105.25121745779,
+      "c_index": 0.7176081898191581,
+      "n_rows": 59205
+    }
+  },
+  "lr_test": {
+    "comparison": "M_a_state_vs_M_a",
+    "lr_stat": 0.3911476262292126,
+    "df": 1,
+    "pvalue": 0.5316967768074465
+  },
+  "delta_c_index": {
+    "delta_M_a_state_minus_M_a": 3.352761172048524e-05,
+    "bootstrap_ci_low": -3.155260846900432e-05,
+    "bootstrap_ci_high": 0.0012247328452735997,
+    "bootstrap_reps_requested": 120,
+    "bootstrap_reps_successful": 120,
+    "bootstrap_refit": true,
+    "bootstrap_cluster_unit": "run_id"
+  },
+  "collinearity_diagnostics": {
+    "analysis_entropy_vs_hmm_gamma": 0.9333332475255481,
+    "design_matrix_condition_number": 68.28081956464298,
+    "confirmatory_M_c_condition_number_reference": 201.39394776896543
+  },
+  "notes": [
+    "Exploratory secondary analysis run alongside, not replacing, the locked confirmatory ladder.",
+    "Model fitting uses the existing locked token feature artifact containing validation gamma_t.",
+    "EWMA intentionally excluded from M_a_state by design."
+  ]
+}

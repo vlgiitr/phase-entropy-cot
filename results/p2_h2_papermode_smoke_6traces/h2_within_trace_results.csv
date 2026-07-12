@@ -1,0 +1,13 @@
+cell,run_id,dataset,n,rho,p_value
+A_draft_within_spearman,livecodebench_0,livecodebench,631,-0.4141399255494481,1.5242933701895064e-27
+A_draft_within_spearman,livecodebench_101,livecodebench,674,-0.5136855117548692,1.179719868988093e-46
+A_draft_within_spearman,livecodebench_104,livecodebench,640,-0.4600853677762262,7.627759985926079e-35
+A_draft_within_spearman,math500_1,math500,852,-0.5095941674924748,1.69889857468528e-57
+A_draft_within_spearman,math500_10,math500,962,-0.3262247789884995,2.7346772500754713e-25
+A_draft_within_spearman,math500_101,math500,746,-0.378948477024582,6.908308440516067e-27
+C_target_within_spearman,livecodebench_0,livecodebench,631,-0.07346253712660304,0.06515526095460061
+C_target_within_spearman,livecodebench_101,livecodebench,674,0.029743363416520802,0.4407544227850532
+C_target_within_spearman,livecodebench_104,livecodebench,640,-0.025065166000185712,0.5267571751464143
+C_target_within_spearman,math500_1,math500,852,-0.06534726319722182,0.05656440918472815
+C_target_within_spearman,math500_10,math500,962,0.06792317057588146,0.03516897186993191
+C_target_within_spearman,math500_101,math500,746,-0.11084069079421799,0.002432118961654195
