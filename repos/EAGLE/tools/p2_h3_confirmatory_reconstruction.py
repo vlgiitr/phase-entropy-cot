@@ -35,8 +35,8 @@ def fit_glm(formula: str, data: pd.DataFrame):
 
 
 def c_index_discrete_time(df: pd.DataFrame, pred_risk: np.ndarray) -> float:
-    """Compute C-index (concordance): higher risk => earlier rejection (lower position)."""
-    return float(concordance_index(df["position"].to_numpy(), -pred_risk, df["reject"].to_numpy()))
+    """Compute C-index (concordance): higher risk => earlier rejection (lower prompt-relative step)."""
+    return float(concordance_index(df["position_model"].to_numpy(), -pred_risk, df["reject"].to_numpy()))
 
 
 def cluster_bootstrap_delta_cindex(
@@ -210,15 +210,17 @@ def main() -> None:
     val = val.rename(columns={"draft_entropy_locked": "draft_entropy_model"})
     val = val.drop(columns=["draft_entropy_raw"])
     
-    required_cols = ["run_id", "position", "draft_entropy_model", "tree_depth_at_accept", "reject", "ewma_entropy", "hmm_gamma"]
+    required_cols = ["run_id", "position", "step", "draft_entropy_model", "tree_depth_at_accept", "reject", "ewma_entropy", "hmm_gamma"]
     val = val.dropna(subset=required_cols).copy()
+    val["position_model"] = pd.to_numeric(val["step"], errors="coerce")
+    val = val.dropna(subset=["position_model"]).copy()
     
     print(f"After merge: {val.shape}, runs: {val['run_id'].nunique()}")
 
     # Formulas (with tree_depth_at_accept as additional covariate)
-    formula_a = "reject ~ draft_entropy_model + tree_depth_at_accept + bs(position, df=5)"
-    formula_b = "reject ~ draft_entropy_model + tree_depth_at_accept + ewma_entropy + bs(position, df=5)"
-    formula_c = "reject ~ draft_entropy_model + tree_depth_at_accept + ewma_entropy + hmm_gamma + bs(position, df=5)"
+    formula_a = "reject ~ draft_entropy_model + tree_depth_at_accept + bs(position_model, df=5)"
+    formula_b = "reject ~ draft_entropy_model + tree_depth_at_accept + ewma_entropy + bs(position_model, df=5)"
+    formula_c = "reject ~ draft_entropy_model + tree_depth_at_accept + ewma_entropy + hmm_gamma + bs(position_model, df=5)"
 
     # Fit
     res_a, pred_a, x_a = fit_glm(formula_a, val)
@@ -292,6 +294,7 @@ def main() -> None:
             "validation_rows": int(val.shape[0]),
             "validation_runs": int(val["run_id"].nunique()),
             "features_from_locked_h3_token_features": True,
+            "position_field_for_spline_and_cindex": "step (prompt-relative)",
         },
         "models": {
             "M_a": {"formula": formula_a, "llf": float(res_a.llf), "aic": float(res_a.aic), "c_index": c_a},

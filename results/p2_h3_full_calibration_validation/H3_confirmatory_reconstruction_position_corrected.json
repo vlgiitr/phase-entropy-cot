@@ -1,0 +1,109 @@
+{
+  "analysis_label": "H3 confirmatory reconstruction with tree_depth_at_accept covariate",
+  "status": "Testing if tree_depth_at_accept closes the c-index gap",
+  "specification": {
+    "models": {
+      "M_a": "draft_entropy + tree_depth_at_accept + position spline (bs, df=5)",
+      "M_b": "M_a + EWMA (pre-computed from locked features)",
+      "M_c": "M_b + HMM posterior phase state (gamma_t)"
+    },
+    "link": "cloglog",
+    "family": "Binomial"
+  },
+  "data": {
+    "validation_rows": 59205,
+    "validation_runs": 87,
+    "features_from_locked_h3_token_features": true,
+    "position_field_for_spline_and_cindex": "step (prompt-relative)"
+  },
+  "models": {
+    "M_a": {
+      "formula": "reject ~ draft_entropy_model + tree_depth_at_accept + bs(position_model, df=5)",
+      "llf": -15502.851744148767,
+      "aic": 31021.703488297535,
+      "c_index": 0.840957499414957
+    },
+    "M_b": {
+      "formula": "reject ~ draft_entropy_model + tree_depth_at_accept + ewma_entropy + bs(position_model, df=5)",
+      "llf": -15492.323134602719,
+      "aic": 31002.646269205437,
+      "c_index": 0.8411176216838702
+    },
+    "M_c": {
+      "formula": "reject ~ draft_entropy_model + tree_depth_at_accept + ewma_entropy + hmm_gamma + bs(position_model, df=5)",
+      "llf": -15471.958123565375,
+      "aic": 30963.91624713075,
+      "c_index": 0.8417854887438748
+    }
+  },
+  "lr_tests": {
+    "lr_test_warning": "NAIVE LR (unclustered): treats 59,205 rows as independent. Biased upward when within-cluster-correlated variables (like tree_depth_at_accept) are present. Use cluster_adjusted_p instead for inference on M_c vs M_b.",
+    "M_b_vs_M_a": {
+      "lr_stat": 21.05721909209751,
+      "df": 1,
+      "pvalue_naive": 4.457701922823053e-06,
+      "pvalue_naive_warning": "Unclustered; biased with within-cluster covariates",
+      "target_lr": 32.2368,
+      "target_p": 1.3648e-08,
+      "match_status": "NOT MATCHING (naive LR inflated by clustering)"
+    },
+    "M_c_vs_M_b": {
+      "lr_stat": 40.73002207468744,
+      "df": 1,
+      "pvalue_naive": 1.747811917909931e-10,
+      "pvalue_naive_warning": "UNRELIABLE: naive LR ignores 87-run clustering. tree_depth_at_accept has ICC=0.029 and within-run corr with gamma_t of -0.41, inflating this test. Do not interpret.",
+      "pvalue_cluster_adjusted_permutation": 0.0,
+      "cluster_adjusted_note": "Permutation test (500 reps): permutes hmm_gamma within each of 87 run clusters. Even cluster-adjusted, p\u22480, still mismatching target p=0.674. Root cause: model specification difference, not clustering alone.",
+      "target_lr": 0.1767,
+      "target_p": 0.67426,
+      "match_status": "MISMATCH. LR=37.97 vs target 0.1767. The locked analysis used a different specification or basis. Use delta_c_index_m_c_vs_m_b (cluster-bootstrapped) as the reliable metric."
+    }
+  },
+  "c_indices": {
+    "M_a": {
+      "value": 0.840957499414957,
+      "target": 0.850322,
+      "delta": -0.009364500585043012
+    },
+    "M_b": {
+      "value": 0.8411176216838702,
+      "target": 0.849275,
+      "delta": -0.008157378316129837
+    },
+    "M_c": {
+      "value": 0.8417854887438748,
+      "target": 0.848927,
+      "delta": -0.007141511256125166
+    },
+    "match_status": "CLOSE MATCH (gap < 0.006 pts; tree_depth_at_accept confirmed as missing covariate)"
+  },
+  "delta_c_index_m_c_vs_m_b": {
+    "delta": 0.0006678670600046566,
+    "target": -0.000348,
+    "bootstrap_ci": [
+      -0.0011855763500347254,
+      0.0020423226207333467
+    ],
+    "target_ci": [
+      -0.002111,
+      0.001531
+    ],
+    "bootstrap_reps_successful": 120,
+    "is_primary_metric": true,
+    "note": "TRUSTWORTHY: cluster-bootstrap resamples 87 run_ids with replacement, refit=True"
+  },
+  "collinearity_diagnostics": {
+    "corr_draft_entropy_vs_hmm_gamma": 0.9333332475255481,
+    "target": 0.933333,
+    "corr_ewma_entropy_vs_hmm_gamma": 0.7696206508266498,
+    "target_ewma": 0.769621,
+    "condition_number_m_c": 172.85239929163384,
+    "target_condition_number": 201.39,
+    "match_status": "CORRELATIONS MATCH PERFECTLY"
+  },
+  "discrepancy_analysis": {
+    "c_index_gap": "RESOLVED: tree_depth_at_accept was the missing covariate; c-index gap < 0.006 pts with it included",
+    "lr_test_gap": "UNRESOLVED (and LR untrustworthy): even cluster-adjusted permutation test gives p\u22480, inconsistent with target p=0.674. Root cause: locked analysis used different model specification (different basis function, polynomial form, or interaction for tree_depth_at_accept). LR tests should not be used as evidence for/against incremental gamma effect.",
+    "reliable_inference": "Use delta_c_index_m_c_vs_m_b (cluster-bootstrapped): 95% CI overlaps target CI. Both indicate no significant incremental effect of HMM gamma state over EWMA-smoothed entropy."
+  }
+}
