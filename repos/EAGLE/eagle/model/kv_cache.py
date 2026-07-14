@@ -1,6 +1,39 @@
 import torch
 
 
+class PastKeyValueSegment:
+    """
+    Wrapper for a segment tensor that allows dynamic resizing of the time dimension.
+    Acts like a tensor for indexing (`__getitem__`) and forwards common attrs.
+    """
+    def __init__(self, tensor: torch.Tensor):
+        self.tensor = tensor
+
+    def ensure_capacity(self, required_len: int, margin: int = 16):
+        # time dimension is at index 3 for the full segment tensor
+        old_len = self.tensor.shape[3]
+        if required_len <= old_len:
+            return
+        # geometric growth: 1.5x or required + margin, whichever larger
+        new_len = max(int(old_len * 1.5), required_len + margin)
+        shape = list(self.tensor.shape)
+        shape[3] = new_len
+        new_tensor = torch.zeros(*shape, device=self.tensor.device, dtype=self.tensor.dtype)
+        # copy existing contents
+        new_tensor[..., :old_len, :] = self.tensor
+        self.tensor = new_tensor
+
+    def __getitem__(self, item):
+        return self.tensor[item]
+
+    def __getattr__(self, name):
+        # forward attributes to the underlying tensor when possible
+        try:
+            return getattr(self.tensor, name)
+        except Exception:
+            raise AttributeError(name)
+
+
 class KVCache:
     """
     A key-value cache for the model.
@@ -19,21 +52,35 @@ class KVCache:
         Initialize the KVCache.
 
         Args:
-            data (torch.Tensor): Initial tensor to store the keys and values.
-            current_length (int): Initial length of the data.
+            data (torch.Tensor or PastKeyValueSegment view): Initial tensor view or
+                a slice view created from a `PastKeyValueSegment` via indexing.
+            current_length (torch.Tensor): Tensor tracking current length for this cache.
         """
-        self.data = data
+        # `data` may be either:
+        # - a tuple (PastKeyValueSegment, index) indicating which slice to use
+        # - a plain tensor view (legacy)
+        if isinstance(data, tuple) or isinstance(data, list):
+            seg, idx = data
+            self._segment = seg
+            self._index = int(idx)
+            self._data_view = None
+        else:
+            self._segment = None
+            self._index = None
+            self._data_view = data
         self.current_length = current_length
 
     @property
     def shape(self):
         """Return the shape of the data tensor with updated length."""
-        return (
-            self.data.shape[0],
-            self.data.shape[1],
-            self.current_length.item(),
-            self.data.shape[3],
-        )
+        v = self._get_view()
+        return (v.shape[0], v.shape[1], self.current_length.item(), v.shape[3])
+
+    def _get_view(self):
+        """Return the current tensor view for this cache (fresh after resizes)."""
+        if self._segment is not None:
+            return self._segment.tensor[self._index]
+        return self._data_view
 
     def copy(self, indices: torch.Tensor, prev_length: int, dim: int = 2):
         """
@@ -44,8 +91,10 @@ class KVCache:
             prev_length (int): Previous length before adding new data.
             dim (int, optional): Dimension along which copying should be performed. Default is 2.
         """
-        tgt = self.data.index_select(dim, indices)
-        dst = self.data.narrow(dim, prev_length, tgt.shape[dim])
+        # operate on the current view
+        view = self._get_view()
+        tgt = view.index_select(dim, indices)
+        dst = view.narrow(dim, prev_length, tgt.shape[dim])
         dst.copy_(tgt, non_blocking=True)
         self.current_length.fill_(prev_length + tgt.shape[dim])
 
@@ -60,10 +109,55 @@ class KVCache:
         Returns:
             torch.Tensor: The data tensor after concatenation up to the current length.
         """
-        dst = self.data.narrow(dim, self.current_length, tensor.shape[dim])
+        # Ensure the underlying storage has enough capacity. The view's time
+        # dimension is at index `dim` in the view; for the full segment tensor,
+        # that corresponds to index 3. If the view is a slice of a segment,
+        # call ensure_capacity on the parent segment.
+        view = self._data_view
+        # Calculate required length
+        req = int(self.current_length.item()) + int(tensor.shape[dim])
+        # If backed by a PastKeyValueSegment, ensure its capacity first so any
+        # view slices we take will reflect the new storage.
+        if self._segment is not None:
+            try:
+                self._segment.ensure_capacity(req)
+            except Exception:
+                pass
+            view = self._get_view()
+        else:
+            base = getattr(view, "_base", None)
+            # view is a view of another tensor
+            if base is not None and hasattr(base, 'shape'):
+                try:
+                    old_len = view.shape[dim]
+                    if req > old_len:
+                        # allocate a larger tensor for the view shape
+                        shape = list(view.shape)
+                        new_len = max(int(old_len * 1.5), req + 16)
+                        shape[dim] = new_len
+                        new_view = torch.zeros(*shape, device=view.device, dtype=view.dtype)
+                        new_view[..., :old_len, :] = view
+                        # update our view reference
+                        self._data_view = new_view
+                        view = self._data_view
+                except Exception:
+                    pass
+            else:
+                # view is standalone tensor, ensure capacity by reallocating
+                old_len = view.shape[dim]
+                if req > old_len:
+                    shape = list(view.shape)
+                    new_len = max(int(old_len * 1.5), req + 16)
+                    shape[dim] = new_len
+                    new_view = torch.zeros(*shape, device=view.device, dtype=view.dtype)
+                    new_view[..., :old_len, :] = view
+                    self._data_view = new_view
+                    view = self._data_view
+
+        dst = view.narrow(dim, int(self.current_length.item()), tensor.shape[dim])
         dst.copy_(tensor)
         self.current_length.add_(tensor.shape[dim])
-        return torch.narrow(self.data, 2, 0, self.current_length)
+        return torch.narrow(view, 2, 0, int(self.current_length.item()))
 
 
 def initialize_past_key_values(model,max_length=2200):
@@ -113,7 +207,8 @@ def initialize_past_key_values(model,max_length=2200):
                 device=startdevice,
                 dtype=model.dtype,
             )
-            past_key_values_data_list.append(past_key_values_data)
+            # wrap in a PastKeyValueSegment for dynamic resizing
+            past_key_values_data_list.append(PastKeyValueSegment(past_key_values_data))
             layers_per_segment.append(startnum)
             current_segment_id += 1
             startdevice = i
@@ -130,7 +225,7 @@ def initialize_past_key_values(model,max_length=2200):
         device=startdevice,
         dtype=model.dtype,
     )
-    past_key_values_data_list.append(past_key_values_data)
+    past_key_values_data_list.append(PastKeyValueSegment(past_key_values_data))
     layers_per_segment.append(startnum)
     # Initialize tensor to store the current length of the cached data for all layers.
     # [IMPORTANT] It needs to be kept on CPU for quick access and updates.
@@ -147,7 +242,7 @@ def initialize_past_key_values(model,max_length=2200):
         past_key_values.append(
             [
                 KVCache(
-                    past_key_values_data_list[seg_id][2 * bias + j],
+                    (past_key_values_data_list[seg_id], 2 * bias + j),
                     current_length_data[i * 2 + j],
                 )
                 for j in range(2)

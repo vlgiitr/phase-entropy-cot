@@ -1,12 +1,14 @@
 import copy
 import json
+import os
 import time
+from pathlib import Path
 
+import numpy as np
 import torch
 import torch.nn as nn
 from huggingface_hub import hf_hub_download
 from transformers import AutoTokenizer
-import os
 from transformers import PreTrainedModel, PretrainedConfig, AutoConfig
 
 from .modeling_llama_kv import LlamaForCausalLM as KVLlamaForCausalLM
@@ -20,6 +22,79 @@ from .kv_cache import initialize_past_key_values
 from .cnets import Model
 from .cnets1 import Model as Model1
 from .configs import EConfig
+
+
+class RuntimeLevelController:
+    def __init__(self, policy_path: str | None = None):
+        self.policy_path = policy_path or self._default_policy_path()
+        self.params = None
+        self.config = None
+        self._entropy_ewma = None
+        self._top1_ewma = None
+        self._load_policy()
+
+    @staticmethod
+    def _default_policy_path() -> str:
+        return str(Path(__file__).resolve().parents[2] / "results" / "controller_real_corpus_eval_v3_frozen.json")
+
+    def _load_policy(self) -> None:
+        policy_path = Path(self.policy_path)
+        if not policy_path.exists():
+            return
+        try:
+            payload = json.loads(policy_path.read_text(encoding="utf-8"))
+        except Exception:
+            return
+        controller = payload.get("controller", {})
+        self.params = controller.get("params", {})
+        self.config = controller.get("config", {})
+        if self.params:
+            self._entropy_ewma = float(self.params.get("entropy_mean", 0.0))
+            self._top1_ewma = 0.5
+
+    def reset(self) -> None:
+        self._entropy_ewma = None
+        self._top1_ewma = None
+        if self.params:
+            self._entropy_ewma = float(self.params.get("entropy_mean", 0.0))
+            self._top1_ewma = 0.5
+
+    def select_length(self, draft_entropy=None, draft_top1_prob=None, fallback_length: int = 4) -> int:
+        if not self.params:
+            return int(max(1, fallback_length))
+        if self._entropy_ewma is None:
+            self.reset()
+
+        alpha_entropy = float(self.config.get("alpha_entropy", 0.2)) if self.config else 0.2
+        alpha_top1 = float(self.config.get("alpha_top1", 0.2)) if self.config else 0.2
+
+        current_entropy = float(self._entropy_ewma)
+        current_top1 = float(self._top1_ewma)
+        if draft_entropy is not None and np.isfinite(float(draft_entropy)):
+            current_entropy = float(draft_entropy)
+            self._entropy_ewma = alpha_entropy * float(draft_entropy) + (1.0 - alpha_entropy) * self._entropy_ewma
+        if draft_top1_prob is not None and np.isfinite(float(draft_top1_prob)):
+            current_top1 = float(draft_top1_prob)
+            self._top1_ewma = alpha_top1 * float(draft_top1_prob) + (1.0 - alpha_top1) * self._top1_ewma
+
+        entropy_mean = float(self.params.get("entropy_mean", 0.0))
+        entropy_std = float(self.params.get("entropy_std", 1.0))
+        if entropy_std < 1e-6:
+            entropy_std = 1.0
+        risk = current_entropy - entropy_mean
+        risk = risk / entropy_std
+        uncertainty = 1.0 - current_top1
+        score = uncertainty + 0.1 * risk
+
+        edges = [float(x) for x in self.params.get("risk_bin_edges", [])]
+        lengths = [int(x) for x in self.params.get("bin_lengths", [])]
+        if not edges or not lengths:
+            return int(max(1, fallback_length))
+        if score <= 0.40:
+            return int(max(1, lengths[0]))
+        if score <= 0.85:
+            return int(max(1, lengths[1]))
+        return int(max(1, lengths[-1]))
 
 
 class EaModel(nn.Module):
@@ -79,6 +154,8 @@ class EaModel(nn.Module):
         self._inside_think = False
         self._think_start_token_id = self.tokenizer.convert_tokens_to_ids("<think>")
         self._think_end_token_id = self.tokenizer.convert_tokens_to_ids("</think>")
+        self._default_total_tokens = int(getattr(self.ea_layer, "total_tokens", 1))
+        self.runtime_controller = RuntimeLevelController()
 
     def get_tokenizer(self):
         """Get the tokenizer of the base model.
@@ -87,6 +164,34 @@ class EaModel(nn.Module):
             Tokenizer: The tokenizer of the base model.
         """
         return self.tokenizer
+
+    def _set_runtime_draft_length(self, draft_length: int) -> None:
+        draft_length = max(1, int(draft_length))
+        self.ea_layer.total_tokens = max(1, draft_length - 1)
+
+    def _get_runtime_draft_length(
+            self,
+            mode: str,
+            draft_length: int | None = None,
+            draft_entropy: float | None = None,
+            draft_top1_prob: float | None = None,
+            fallback_length: int = 4,
+    ) -> int:
+        mode = (mode or "speculative").lower()
+        if mode == "ar" or mode == "autoregressive":
+            return 1
+        if mode == "fixed":
+            return int(max(1, draft_length or fallback_length))
+        if mode == "controller":
+            return self.runtime_controller.select_length(
+                draft_entropy=draft_entropy,
+                draft_top1_prob=draft_top1_prob,
+                fallback_length=fallback_length,
+            )
+        return int(max(1, draft_length or fallback_length))
+
+    def _restore_runtime_draft_length(self) -> None:
+        self.ea_layer.total_tokens = max(1, int(self._default_total_tokens))
 
     @classmethod
     def from_pretrained(
@@ -213,6 +318,8 @@ class EaModel(nn.Module):
             position,
             logits_processor,
             log_metadata=None,
+            mode: str = "speculative",
+            draft_length: int | None = None,
     ):
         try:
             token_id = int(token[0, 0].item())
@@ -230,15 +337,23 @@ class EaModel(nn.Module):
 
             retrieve_hidden_state_new = hidden_state_new[:, retrieve_indices]
             retrieve_hidden_state_new = retrieve_hidden_state_new[0]
-            accept_hidden_state_new = retrieve_hidden_state_new[best_candidate, : accept_length + 1]
-            target_hidden = retrieve_hidden_state_new[best_candidate, accept_length].detach().cpu().tolist()
-            draft_hidden = accept_hidden_state_new[-1].detach().cpu().tolist()
+            if best_candidate < retrieve_hidden_state_new.shape[0]:
+                accept_hidden_state_new = retrieve_hidden_state_new[best_candidate, : accept_length + 1]
+                target_hidden = retrieve_hidden_state_new[best_candidate, accept_length].detach().cpu().tolist()
+                draft_hidden = accept_hidden_state_new[-1].detach().cpu().tolist()
+            else:
+                accept_hidden_state_new = retrieve_hidden_state_new[0, : accept_length + 1]
+                target_hidden = retrieve_hidden_state_new[0, accept_length].detach().cpu().tolist()
+                draft_hidden = accept_hidden_state_new[-1].detach().cpu().tolist()
 
-            tree_depth = int((retrieve_indices[best_candidate] >= 0).sum().item())
+            tree_depth = int((retrieve_indices[best_candidate] >= 0).sum().item()) if best_candidate < retrieve_indices.shape[0] else int(accept_length)
             if tree_depth == 0:
                 tree_depth = int(accept_length)
 
-            logits_row = logits[best_candidate, accept_length]
+            if best_candidate < logits.shape[0] and accept_length < logits.shape[1]:
+                logits_row = logits[best_candidate, accept_length]
+            else:
+                logits_row = logits[0, 0]
             target_probs = torch.softmax(logits_row, dim=-1)
             target_entropy = float((-(target_probs * torch.log2(target_probs.clamp(min=1e-12))).sum()).item())
 
@@ -339,6 +454,8 @@ class EaModel(nn.Module):
                 "is_inside_think": bool(is_inside_think),
                 "phase_label_hmm": None,
                 "tree_depth": int(tree_depth),
+                "run_mode": mode,
+                "draft_length": int(draft_length) if draft_length is not None else None,
             }
             print(json.dumps(forensic))
         except Exception as exc:
@@ -368,54 +485,80 @@ class EaModel(nn.Module):
             log=False,
             is_llama3=False,
             log_metadata=None,
+            mode: str = "speculative",
+            fixed_draft_length: int = 4,
+            controller_policy_path: str | None = None,
 
     ):
+        if mode in {"ar", "autoregressive"}:
+            return self.naivegenerate(
+                input_ids=input_ids,
+                temperature=temperature,
+                top_p=top_p,
+                top_k=top_k,
+                max_new_tokens=max_new_tokens,
+                max_length=max_length,
+                log=log,
+                is_llama3=is_llama3,
+                mode=mode,
+                fixed_draft_length=fixed_draft_length,
+                controller_policy_path=controller_policy_path,
+            )
+
+        if controller_policy_path is not None:
+            self.runtime_controller = RuntimeLevelController(policy_path=controller_policy_path)
+        elif not hasattr(self, "runtime_controller") or self.runtime_controller is None:
+            self.runtime_controller = RuntimeLevelController()
+
         if is_llama3:
             stop_token_id = self.tokenizer.convert_tokens_to_ids("<|eot_id|>")
-
 
         if temperature > 1e-5:
             logits_processor = prepare_logits_processor(temperature=temperature, top_p=top_p, top_k=top_k)
         else:
             logits_processor = None
-        # assert input_ids.shape[0] == 1, "Only support batch size 1 for now!!"
-        # Avoid modifying the input_ids in-place
 
         padding = (torch.zeros(1, 1, dtype=torch.long) - 1).to(input_ids.device)
         input_ids = input_ids.clone()
         self.ea_layer.reset_kv()
 
-        # Initialize the past key and value states
         if hasattr(self, "past_key_values"):
             past_key_values = self.past_key_values
             past_key_values_data = self.past_key_values_data
             current_length_data = self.current_length_data
-            # Reset the past key and value states
             current_length_data.zero_()
         else:
+            # Allocate KV cache with a safe margin: allow room for the prompt,
+            # the planned new tokens, and the EA draft tokens to avoid overflow
+            # during tree decoding. This prevents writes that exceed the
+            # preallocated dimension (seen as: start + length > dimension).
+            alloc_max = int(max_length + max_new_tokens + getattr(self.ea_layer, 'total_tokens', 0) + 16)
             (
                 past_key_values,
                 past_key_values_data,
                 current_length_data,
-            ) = initialize_past_key_values(self.base_model,max_length=max_length)
+            ) = initialize_past_key_values(self.base_model, max_length=alloc_max)
             self.past_key_values = past_key_values
             self.past_key_values_data = past_key_values_data
             self.current_length_data = current_length_data
 
         input_len = input_ids.shape[1]
         reset_tree_mode(self)
-        # prefill
+        self.runtime_controller.reset()
+        current_draft_length = self._get_runtime_draft_length(
+            mode=mode,
+            draft_length=fixed_draft_length,
+            fallback_length=fixed_draft_length,
+        )
+        self._set_runtime_draft_length(current_draft_length)
         draft_tokens, retrieve_indices, tree_mask, tree_position_ids, logits, hidden_state, sample_token, draft_stats = initialize_tree(
             input_ids, self, past_key_values, logits_processor
         )
         new_token = 0
         max_length = max_length - self.ea_layer.total_tokens - 10
         for idx in range(max_length):
-            # with Timer("all"):
             self.base_model.model.tree_mask = tree_mask
-
             draft_tokens = draft_tokens.to(input_ids.device)
-            # Target model forward, get logits
             logits, hidden_state_new, outputs = tree_decoding(
                 self,
                 draft_tokens,
@@ -424,19 +567,13 @@ class EaModel(nn.Module):
                 input_ids,
                 retrieve_indices,
             )
-            # retrieve_indices=tree_buffers["retrieve_indices"]
-            # logits = logits[0, retrieve_indices]
             draft_tokens = torch.cat((draft_tokens, padding), dim=1)
             candidates = draft_tokens[0, retrieve_indices]
-            # verification
             best_candidate, accept_length, sample_p = evaluate_posterior(
                 logits, candidates, logits_processor
             )
-            # print(accept_length)
             prev_input_len = input_ids.shape[1]
-            # Position must be relative to prompt end (P1.1), not absolute sequence length.
             position_from_prompt_end = max(0, prev_input_len - input_len)
-            # Adjusting the input sequence, draft model forward
             input_ids, draft_tokens, retrieve_indices, tree_mask, tree_position_ids, new_token, hidden_state, sample_token, draft_stats = update_inference_inputs(
                 input_ids,
                 candidates,
@@ -449,8 +586,16 @@ class EaModel(nn.Module):
                 current_length_data,
                 self,
                 hidden_state_new,
-                sample_p
+                sample_p,
             )
+            current_draft_length = self._get_runtime_draft_length(
+                mode=mode,
+                draft_length=fixed_draft_length,
+                draft_entropy=draft_stats.get("draft_entropy") if isinstance(draft_stats, dict) else None,
+                draft_top1_prob=draft_stats.get("draft_top1_prob") if isinstance(draft_stats, dict) else None,
+                fallback_length=fixed_draft_length,
+            )
+            self._set_runtime_draft_length(current_draft_length)
             if log:
                 self._log_forensic_step(
                     idx,
@@ -466,18 +611,21 @@ class EaModel(nn.Module):
                     position_from_prompt_end,
                     logits_processor,
                     log_metadata=log_metadata,
+                    mode=mode,
+                    draft_length=current_draft_length,
                 )
 
             if is_llama3:
                 if stop_token_id in input_ids[0, input_len:].tolist():
                     break
-
             if self.tokenizer.eos_token_id in input_ids[0, input_len:].tolist():
                 break
             if new_token > max_new_tokens:
                 break
             if input_ids.shape[1] > max_length:
                 break
+
+        self._restore_runtime_draft_length()
         if not log:
             return input_ids
         else:
@@ -494,6 +642,9 @@ class EaModel(nn.Module):
             max_length=2048,
             log=False,
             is_llama3=False,
+            mode: str = "ar",
+            fixed_draft_length: int = 4,
+            controller_policy_path: str | None = None,
 
     ):
         if is_llama3:
@@ -519,11 +670,12 @@ class EaModel(nn.Module):
             # Reset the past key and value states
             current_length_data.zero_()
         else:
+            alloc_max = int(max_length + max_new_tokens + getattr(self.ea_layer, 'total_tokens', 0) + 16)
             (
                 past_key_values,
                 past_key_values_data,
                 current_length_data,
-            ) = initialize_past_key_values(self.base_model,max_length=max_length)
+            ) = initialize_past_key_values(self.base_model, max_length=alloc_max)
             self.past_key_values = past_key_values
             self.past_key_values_data = past_key_values_data
             self.current_length_data = current_length_data
@@ -571,53 +723,76 @@ class EaModel(nn.Module):
             max_length=2048,
             log=False,
             is_llama3=False,
+            mode: str = "speculative",
+            fixed_draft_length: int = 4,
+            controller_policy_path: str | None = None,
 
     ):
+        if mode in {"ar", "autoregressive"}:
+            return self.naive_generate(
+                input_ids=input_ids,
+                temperature=temperature,
+                top_p=top_p,
+                top_k=top_k,
+                max_new_tokens=max_new_tokens,
+                max_length=max_length,
+                log=log,
+                is_llama3=is_llama3,
+                mode=mode,
+                fixed_draft_length=fixed_draft_length,
+                controller_policy_path=controller_policy_path,
+            )
+
+        if controller_policy_path is not None:
+            self.runtime_controller = RuntimeLevelController(policy_path=controller_policy_path)
+        elif not hasattr(self, "runtime_controller") or self.runtime_controller is None:
+            self.runtime_controller = RuntimeLevelController()
+
         if is_llama3:
             stop_token_id = self.tokenizer.convert_tokens_to_ids("<|eot_id|>")
-
 
         if temperature > 1e-5:
             logits_processor = prepare_logits_processor(temperature=temperature, top_p=top_p, top_k=top_k)
         else:
             logits_processor = None
-        # assert input_ids.shape[0] == 1, "Only support batch size 1 for now!!"
-        # Avoid modifying the input_ids in-place
 
         padding = (torch.zeros(1, 1, dtype=torch.long) - 1).to(input_ids.device)
         input_ids = input_ids.clone()
         self.ea_layer.reset_kv()
 
-        # Initialize the past key and value states
         if hasattr(self, "past_key_values"):
             past_key_values = self.past_key_values
             past_key_values_data = self.past_key_values_data
             current_length_data = self.current_length_data
-            # Reset the past key and value states
             current_length_data.zero_()
         else:
+            alloc_max = int(max_length + max_new_tokens + getattr(self.ea_layer, 'total_tokens', 0) + 16)
             (
                 past_key_values,
                 past_key_values_data,
                 current_length_data,
-            ) = initialize_past_key_values(self.base_model,max_length=max_length)
+            ) = initialize_past_key_values(self.base_model, max_length=alloc_max)
             self.past_key_values = past_key_values
             self.past_key_values_data = past_key_values_data
             self.current_length_data = current_length_data
 
         input_len = input_ids.shape[1]
         reset_tree_mode(self)
+        self.runtime_controller.reset()
+        current_draft_length = self._get_runtime_draft_length(
+            mode=mode,
+            draft_length=fixed_draft_length,
+            fallback_length=fixed_draft_length,
+        )
+        self._set_runtime_draft_length(current_draft_length)
         draft_tokens, retrieve_indices, tree_mask, tree_position_ids, logits, hidden_state, sample_token, draft_stats = initialize_tree(
             input_ids, self, past_key_values, logits_processor
         )
         new_token = 0
         max_length = max_length - self.ea_layer.total_tokens - 10
         for idx in range(max_length):
-            # with Timer("all"):
             self.base_model.model.tree_mask = tree_mask
-
             draft_tokens = draft_tokens.to(input_ids.device)
-            # with Timer("tree_decoding"):
             logits, hidden_state_new, outputs = tree_decoding(
                 self,
                 draft_tokens,
@@ -626,18 +801,13 @@ class EaModel(nn.Module):
                 input_ids,
                 retrieve_indices,
             )
-            # retrieve_indices=tree_buffers["retrieve_indices"]
-            # logits = logits[0, retrieve_indices]
             draft_tokens = torch.cat((draft_tokens, padding), dim=1)
             candidates = draft_tokens[0, retrieve_indices]
             best_candidate, accept_length, sample_p = evaluate_posterior(
                 logits, candidates, logits_processor
             )
-            # print(accept_length)
             prev_input_len = input_ids.shape[1]
-            # Position must be relative to prompt end (P1.1), not absolute sequence length.
             position_from_prompt_end = max(0, prev_input_len - input_len)
-            # with Timer("update_inference_inputs"):
             input_ids, draft_tokens, retrieve_indices, tree_mask, tree_position_ids, new_token, hidden_state, sample_token, draft_stats = update_inference_inputs(
                 input_ids,
                 candidates,
@@ -650,8 +820,16 @@ class EaModel(nn.Module):
                 current_length_data,
                 self,
                 hidden_state_new,
-                sample_p
+                sample_p,
             )
+            current_draft_length = self._get_runtime_draft_length(
+                mode=mode,
+                draft_length=fixed_draft_length,
+                draft_entropy=draft_stats.get("draft_entropy") if isinstance(draft_stats, dict) else None,
+                draft_top1_prob=draft_stats.get("draft_top1_prob") if isinstance(draft_stats, dict) else None,
+                fallback_length=fixed_draft_length,
+            )
+            self._set_runtime_draft_length(current_draft_length)
             if log:
                 self._log_forensic_step(
                     idx,
@@ -666,6 +844,8 @@ class EaModel(nn.Module):
                     candidates,
                     position_from_prompt_end,
                     logits_processor,
+                    mode=mode,
+                    draft_length=current_draft_length,
                 )
 
             yield input_ids
@@ -673,13 +853,14 @@ class EaModel(nn.Module):
             if is_llama3:
                 if stop_token_id in input_ids[0, input_len:].tolist():
                     break
-
             if self.tokenizer.eos_token_id in input_ids[0, input_len:].tolist():
                 break
             if new_token > max_new_tokens:
                 break
             if input_ids.shape[1] > max_length:
                 break
+
+        self._restore_runtime_draft_length()
 
     @torch.no_grad()
     def naive_generate(
@@ -692,6 +873,9 @@ class EaModel(nn.Module):
             max_length=2048,
             log=False,
             is_llama3=False,
+            mode: str = "ar",
+            fixed_draft_length: int = 4,
+            controller_policy_path: str | None = None,
 
     ):
         if is_llama3:
@@ -717,11 +901,12 @@ class EaModel(nn.Module):
             # Reset the past key and value states
             current_length_data.zero_()
         else:
+            alloc_max = int(max_length + max_new_tokens + getattr(self.ea_layer, 'total_tokens', 0) + 16)
             (
                 past_key_values,
                 past_key_values_data,
                 current_length_data,
-            ) = initialize_past_key_values(self.base_model,max_length=max_length)
+            ) = initialize_past_key_values(self.base_model, max_length=alloc_max)
             self.past_key_values = past_key_values
             self.past_key_values_data = past_key_values_data
             self.current_length_data = current_length_data

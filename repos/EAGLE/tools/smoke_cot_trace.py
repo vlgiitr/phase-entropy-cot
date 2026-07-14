@@ -1,7 +1,9 @@
+import argparse
 import json
 import os
 import sys
 from io import StringIO
+from pathlib import Path
 
 import torch
 from datasets import load_from_disk
@@ -14,6 +16,7 @@ from eagle.model.ea_model import EaModel
 BASE_MODEL = os.path.abspath(os.path.join(ROOT, '..', '..', 'models', 'llama8b'))
 EA_MODEL = os.path.abspath(os.path.join(ROOT, '..', '..', 'models', 'eagle3-llama'))
 DATA_DIR = os.path.abspath(os.path.join(ROOT, '..', '..', 'data'))
+SPLIT_CHOICES = ('calibration', 'validation', 'test')
 
 
 def build_reasoning_prompt(tokenizer, problem_text, dataset_name):
@@ -59,13 +62,104 @@ def sample_to_text(obj):
     return json.dumps(obj)
 
 
-def main():
-    dataset_name = os.environ.get('SMOKE_DATASET', 'math500').strip()
-    sample_index = int(os.environ.get('SMOKE_INDEX', '0'))
-    max_new_tokens = int(os.environ.get('SMOKE_MAX_NEW_TOKENS', '512'))
-    max_length = int(os.environ.get('SMOKE_MAX_LENGTH', '2048'))
+def _load_split_ids(dataset_name, split_name, split_locks_dir=None):
+    split_locks_dir = Path(split_locks_dir or os.path.join(ROOT, '..', '..', 'splits'))
+    lock_path = Path(split_locks_dir) / f'{split_name}_locked.json'
+    if not lock_path.exists():
+        return None
+    payload = json.loads(lock_path.read_text(encoding='utf-8'))
+    ids = payload.get(dataset_name)
+    if isinstance(ids, list):
+        return {str(item) for item in ids}
+    return None
 
-    dataset = load_from_disk(os.path.join(DATA_DIR, dataset_name))['test']
+
+def _row_matches_split_id(row, split_ids):
+    if not split_ids:
+        return False
+    if isinstance(row, dict):
+        row_dict = row
+    else:
+        row_dict = dict(row)
+    for key in ('unique_id', 'problem_id', 'question_id', 'id', 'contest_id', 'question_title', 'problem', 'input', 'prompt', 'text'):
+        value = row_dict.get(key)
+        if value is None:
+            continue
+        if isinstance(value, (list, tuple, dict)):
+            continue
+        if str(value) in split_ids:
+            return True
+    return False
+
+
+def select_dataset_rows(dataset_name, dataset_store, split_name, split_locks_dir=None, allow_test_split=True, confirm_fn=None):
+    split_name = (split_name or 'validation').strip().lower()
+    if split_name not in SPLIT_CHOICES:
+        raise ValueError(f'Unsupported split {split_name!r}; expected one of {SPLIT_CHOICES}')
+
+    if split_name == 'test':
+        if not allow_test_split:
+            raise RuntimeError('The test split is not available by default. Pass --confirm-test-split to opt in.')
+        if confirm_fn is None:
+            def confirm_fn(prompt_text):
+                if not sys.stdin.isatty():
+                    raise RuntimeError('The test split requires an explicit confirmation. Re-run with --confirm-test-split.')
+                print(prompt_text, end='', flush=True)
+                response = input().strip().lower()
+                return response in {'y', 'yes'}
+        if not confirm_fn('You are about to run smoke tests on the test split. Continue? [y/N] '):
+            raise RuntimeError('Test split selection aborted.')
+
+    split_ids = _load_split_ids(dataset_name, split_name, split_locks_dir=split_locks_dir)
+    if split_ids is not None:
+        if isinstance(dataset_store, dict):
+            if split_name in dataset_store:
+                rows = dataset_store[split_name]
+                if isinstance(rows, (list, tuple)):
+                    return list(rows)
+        rows = [row for row in dataset_store if _row_matches_split_id(row, split_ids)]
+        if rows:
+            return rows
+
+    if isinstance(dataset_store, dict):
+        if split_name in dataset_store:
+            rows = dataset_store[split_name]
+            return list(rows)
+
+    raise RuntimeError(f'No rows matched the {split_name} split for dataset {dataset_name!r}.')
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Run a small EAGLE smoke generation pass.')
+    parser.add_argument('--dataset', default=os.environ.get('SMOKE_DATASET', 'math500').strip(), help='Dataset name to sample from')
+    parser.add_argument('--index', type=int, default=int(os.environ.get('SMOKE_INDEX', '0')), help='Sample index within the selected split')
+    parser.add_argument('--max-new-tokens', type=int, default=int(os.environ.get('SMOKE_MAX_NEW_TOKENS', '512')), help='Maximum new tokens to generate')
+    parser.add_argument('--max-length', type=int, default=int(os.environ.get('SMOKE_MAX_LENGTH', '2048')), help='Maximum sequence length')
+    parser.add_argument('--mode', choices=['ar', 'fixed', 'controller'], default=os.environ.get('SMOKE_MODE', 'fixed'), help='Generation mode to use')
+    parser.add_argument('--fixed-draft-length', type=int, default=int(os.environ.get('SMOKE_FIXED_DRAFT_LENGTH', '4')), help='Draft length to use in fixed mode')
+    parser.add_argument('--controller-policy', default=os.environ.get('SMOKE_CONTROLLER_POLICY', os.path.join(ROOT, '..', '..', 'results', 'controller_real_corpus_eval_v3_frozen.json')), help='Path to the frozen controller JSON policy')
+    parser.add_argument('--split', choices=SPLIT_CHOICES, default=os.environ.get('SMOKE_SPLIT', 'validation').strip() or 'validation', help='Dataset split to sample from (default: validation)')
+    parser.add_argument('--confirm-test-split', action='store_true', help='Explicitly confirm that the test split should be used')
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    dataset_name = args.dataset
+    sample_index = args.index
+    max_new_tokens = args.max_new_tokens
+    max_length = args.max_length
+
+    dataset_store = load_from_disk(os.path.join(DATA_DIR, dataset_name))
+    dataset = select_dataset_rows(
+        dataset_name,
+        dataset_store,
+        args.split,
+        split_locks_dir=os.path.join(ROOT, '..', '..', 'splits'),
+        allow_test_split=args.confirm_test_split,
+    )
+    if sample_index >= len(dataset):
+        raise IndexError(f'Sample index {sample_index} is out of range for split {args.split} with {len(dataset)} rows')
     sample = dataset[sample_index]
     problem_text = sample_to_text(sample)
 
@@ -96,6 +190,8 @@ def main():
     old_stdout = sys.stdout
     sys.stdout = buf
     try:
+        mode = args.mode
+        controller_policy_path = args.controller_policy if mode == 'controller' else None
         _ = model.eagenerate(
             input_ids.clone(),
             temperature=0.0,
@@ -108,6 +204,9 @@ def main():
                 'drafter_name': 'EAGLE-3',
                 'temperature': 0.0,
             },
+            mode=mode,
+            fixed_draft_length=args.fixed_draft_length,
+            controller_policy_path=controller_policy_path,
         )
     finally:
         sys.stdout = old_stdout
@@ -134,7 +233,9 @@ def main():
 
     summary = {
         'dataset': dataset_name,
+        'split': args.split,
         'sample_index': sample_index,
+        'selected_rows': len(dataset),
         'rows': len(rows),
         'error_rows': len(error_rows),
         'think_rows': len(think_rows),
@@ -142,6 +243,8 @@ def main():
         'first_think_row': think_rows[0] if think_rows else None,
         'first_endthink_row': endthink_rows[0] if endthink_rows else None,
         'first_error': error_rows[0] if error_rows else None,
+        'mode': args.mode,
+        'fixed_draft_length': args.fixed_draft_length,
     }
     print(json.dumps(summary, ensure_ascii=True))
 
